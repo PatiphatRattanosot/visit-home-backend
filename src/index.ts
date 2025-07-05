@@ -1,0 +1,182 @@
+import { Elysia } from "elysia";
+import { html, Html } from "@elysiajs/html";
+import { swagger } from "@elysiajs/swagger";
+import { jwt } from "@elysiajs/jwt";
+import { cors } from "@elysiajs/cors";
+
+// Connect Database
+import "./database/db_setup";
+
+// Import Controllers
+import AuthController from "./controllers/auth_controller";
+import TeacherController from "./controllers/users/teacher_controller";
+import UserController from "./controllers/users/user_controller";
+import YearController from "./controllers/year_controller";
+import ClassController from "./controllers/class_controller";
+import studentController from "./controllers/users/student_controller";
+
+const app = new Elysia()
+  //middleware
+  // HTML
+  .use(html())
+  // CORS
+  .use(
+    cors({
+      origin:
+        process.env.FRONTEND_URL || "http://localhost:5173",
+      credentials: true,
+    })
+  )
+  // JWT
+  .use(jwt({ secret: process.env.JWT_SECRET }))
+  // Swagger
+  .use(
+    swagger({
+      documentation: {
+        info: {
+          title: "เอกสาร API ระบบเยี่ยมบ้าน",
+          description: "description",
+          version: "0.3.0",
+        },
+        servers: [
+          {
+            url: "http://localhost:3000",
+            description: "Development server",
+          },
+          {
+            url: "https://api.example.com",
+            description: "Production server",
+          },
+        ],
+        tags: [
+          {
+            name: "App",
+            description: "API ทั่วไปของระบบ",
+          },
+          {
+            name: "Auth",
+            description: "API สำหรับการเข้าสู่ระบบและยืนยันตัวตน ",
+          },
+          {
+            name: "User",
+            description: "API สำหรับการจัดการผู้ใช้",
+          },
+          {
+            name: "Teacher",
+            description: "API สำหรับการจัดการข้อมูลครู",
+          },
+          {
+            name: "Year",
+            description: "API สำหรับการจัดการปีการศึกษา",
+          },
+          {
+            name: "Class",
+            description: "API สำหรับการจัดการชั้นเรียน",
+          },
+        ],
+      },
+    })
+  )
+  // Controllers
+  .group("/auth", (app) => app.use(AuthController.sign).use(AuthController.sign_out))
+  .group("", (app) =>
+    app
+      .onBeforeHandle(async ({ cookie: { auth }, set, jwt }) => {
+        try {
+          // ตรวจสอบว่า auth cookie มีอยู่หรือไม่
+          if (!auth.value) {
+            set.status = 400;
+            return { message: "No token provided" };
+          }
+
+          // ตรวจสอบ JWT token
+          const user = await jwt.verify(auth.value);
+          if (!user) {
+            set.status = 401;
+            return { message: "Invalid token" };
+          }
+
+          // หากตรวจสอบผ่าน ให้อนุญาตให้ดำเนินการต่อ
+          return;
+        } catch (error) {
+          set.status = 401; // Unauthorized
+          return { message: "Unauthorized" };
+        }
+      })
+      // .derive(async ({ cookie: { auth }, set, jwt }) => {})
+
+      .group("/users", (app) =>
+        app
+          // User
+          .use(UserController.get_users)
+          .use(UserController.delete_user)
+          .use(UserController.add_admin_role)
+          .use(UserController.remove_admin_role)
+          // Teacher
+          .group("/teacher", (app) =>
+            app
+              .use(TeacherController.create_teacher)
+              .use(TeacherController.get_teacher)
+              .use(TeacherController.get_teacher_by_id)
+              .use(TeacherController.update_teacher)
+          )
+          // Student
+          .group("/student", (app) => 
+            app
+              .use(studentController.get_all)
+              .use(studentController.create)
+              .use(studentController.get_by_id)
+              .use(studentController.update)
+            )
+      )
+      // Year
+      .group("/year", (app) =>
+        app
+          .use(YearController.create_year)
+          .use(YearController.auto_create_year)
+          .use(YearController.get_years)
+          .use(YearController.get_year_by_id)
+          .use(YearController.update_year)
+          .use(YearController.delete_year)
+      )
+      // Class
+      .group("/class", (app) =>
+        app
+          .use(ClassController.create_class)
+          .use(ClassController.get_classes_by_year)
+          .use(ClassController.get_class_by_id)
+          .use(ClassController.update_class)
+          .use(ClassController.delete_class)
+      )
+  )
+  // Home Page
+  .get(
+    "/",
+    () =>
+      `<html>
+        <head>
+          <title>Visit Home API</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+          <div class="text-center p-8 bg-white shadow-lg rounded-lg">
+            <h1 class="text-4xl font-bold text-blue-600 mb-6">
+              ยินดีต้อนรับสู่ API ระบบเยี่ยมบ้านนักโรงเรียนบางแพปฐมพิทยา
+            </h1>
+            <p class="text-lg text-gray-700">
+              ไปที่ 
+              <a href='/swagger' class="text-blue-500 underline hover:text-blue-700">
+                เอกสาร API
+              </a> 
+              เพื่อดูรายละเอียด API ทั้งหมดที่มีในระบบ
+            </p>
+          </div>
+        </body>
+      </html>`,
+    { detail: { tags: ["App"] } }
+  )
+  .listen(process.env.PORT || 3000);
+
+console.log(
+  `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
+);
