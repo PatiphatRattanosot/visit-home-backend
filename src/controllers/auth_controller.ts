@@ -11,6 +11,20 @@ const sign = async (app: Elysia) =>
       async ({ body, set, jwt, cookie: { auth } }) => {
         try {
           const { email } = body;
+
+          if (auth.value) {
+            const user_token = await jwt.verify(auth.value);
+            console.log(user_token);
+            if (user_token && typeof user_token === "object") {
+              if (email != user_token.email) {
+                // หาก token มีอยู่แล้วและ email ไม่ตรงกับ token ที่มีอยู่
+                auth.remove(); // ลบ cookie auth เดิม
+                set.status = 403
+                return { message:`การเข้าสู่ระบบทับซ้อน กรุณาเข้าสู่ระบบใหม่อีกครั้ง` }; 
+              }
+            }
+          }
+
           // ตรวจสอบว่ามี email หรือไม่
           if (!email) {
             set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
@@ -60,25 +74,25 @@ const sign = async (app: Elysia) =>
       }
     );
 
-  const sign_out = async (app: Elysia) =>
-  app
-    .post(
-      "/sign-out",
-      async ({ set,  cookie: { auth } }) => {
-         auth.remove()
-        set.status = 200
-        return {message:"ออกจากระบบสำเร็จ"}
-      },{
-        detail: {
-          tags: ["Auth"],
-          description: "ฟังชั่นออกจากระบบ",
-        },
-      }
-    );
-  
+const sign_out = async (app: Elysia) =>
+  app.post(
+    "/sign-out",
+    async ({ set, cookie: { auth } }) => {
+      auth.remove();
+      set.status = 200;
+      return { message: "ออกจากระบบสำเร็จ" };
+    },
+    {
+      detail: {
+        tags: ["Auth"],
+        description: "ฟังชั่นออกจากระบบ",
+      },
+    }
+  );
+
 const AuthController = {
   sign,
-  sign_out
+  sign_out,
 };
 
 export default AuthController;
