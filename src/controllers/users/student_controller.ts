@@ -1,10 +1,9 @@
 import { Elysia, t } from "elysia";
 import StudentModel from "../../models/users/student_model";
-
 // ฟังก์ชัน studentController สำหรับจัดการ Student
 const create = (app: Elysia) =>
   app.post(
-    "/students",
+    "ฝ",
     async ({ body, set }) => {
       const { first_name, last_name, prefix, user_id, class_id } = body;
       try {
@@ -37,7 +36,7 @@ const create = (app: Elysia) =>
         });
         // await student.save();
         set.status = 201;
-        return {message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student  };
+        return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student };
       } catch (err) {
         set.status = 500;
         return {
@@ -62,7 +61,7 @@ const create = (app: Elysia) =>
 
 const get_all = (app: Elysia) =>
   app.get(
-    "/students",
+    "",
     async () => {
       return await StudentModel.find();
     },
@@ -76,7 +75,7 @@ const get_all = (app: Elysia) =>
 
 const get_by_id = (app: Elysia) =>
   app.get(
-    "/students/:id",
+    "/:id",
     async ({ params, set }) => {
       const student = await StudentModel.findById(params.id);
       if (!student) {
@@ -94,9 +93,10 @@ const get_by_id = (app: Elysia) =>
     }
   );
 
-  const update = (app: Elysia) =>
+// อัพเดตข้อมูลหลักนักเรียน
+const update_student_info = (app: Elysia) =>
   app.put(
-    "/students/:id",
+    "/:id",
     async ({ params, body, set }) => {
       const { first_name, last_name, prefix, user_id, class_id } = body;
       try {
@@ -109,7 +109,8 @@ const get_by_id = (app: Elysia) =>
           set.status = 404;
           return { message: "ไม่พบข้อมูลนักเรียนที่ต้องการแก้ไข" };
         }
-        return student;
+        set.status = 200;
+        return { message: "แก้ไขข้อมูลนักเรียนสำเร็จ", student };
       } catch (err) {
         set.status = 500;
         return {
@@ -128,18 +129,75 @@ const get_by_id = (app: Elysia) =>
       }),
       detail: {
         tags: ["Student"],
-        description: "แก้ไขข้อมูลนักเรียนตาม id",
+        description: "แก้ไขข้อมูลนักเรียนหลัก",
       },
     }
   );
 
+// อัพเดตข้อมูลรายปีของนักเรียน
+const update_yearly_data = (app: Elysia) =>
+  app.put(
+    "/:id/yearly/:year_id",
+    async ({ params, body, set }) => {
+      try {
+        const student = (await StudentModel.findById(params.id)) 
+        if (!student) {
+          set.status = 404;
+          return { message: "ไม่พบข้อมูลนักเรียน" };
+        }
+        // หา yearly_data ที่ตรงกับ year_id
+        let yearly = student.yearly_data.find(
+          (y: any) => y.year.toString() === params.year_id
+        );
+
+        if (!yearly) {
+          // ถ้ายังไม่มีปีนี้ ให้เพิ่มใหม่ โดยกำหนดค่า default สำหรับ property ที่จำเป็น
+          yearly = {
+            year: params.year_id,
+            personal_info: body.personal_info ?? {},
+            relation_info: body.relation_info ?? {},
+            family_status_info: body.family_status_info ?? {},
+            behavior_and_risk: body.behavior_and_risk ?? {},
+          };
+          student.yearly_data.push(yearly);
+        } else {
+          // ถ้ามีแล้ว ให้อัพเดตข้อมูล
+          Object.assign(yearly, body);
+        }
+
+        await student.save();
+        set.status = 200;
+        return { message: "แก้ไขข้อมูลรายปีนักเรียนสำเร็จ", yearly };
+      } catch (err) {
+        set.status = 500;
+        return {
+          message:
+            "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลรายปีนักเรียนได้",
+        };
+      }
+    },
+    {
+      params: t.Object({ id: t.String(), year_id: t.String() }),
+      body: t.Object({
+        personal_info: t.Optional(t.Any()),
+        relation_info: t.Optional(t.Any()),
+        family_status_info: t.Optional(t.Any()),
+        behavior_and_risk: t.Optional(t.Any()),
+        // ...เพิ่มตาม schema ของ yearly_data
+      }),
+      detail: {
+        tags: ["Student"],
+        description: "แก้ไขข้อมูลรายปีของนักเรียน",
+      },
+    }
+  );
 
 const StudentController = {
   create,
   get_all,
   get_by_id,
-  update,
-  
+  update_student_info,
+  update_yearly_data,
 };
 
 export default StudentController;
