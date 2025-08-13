@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia,t } from "elysia";
 import { html, Html } from "@elysiajs/html";
 import swagger from "./swagger/index";
 import { jwt } from "@elysiajs/jwt";
@@ -56,6 +56,28 @@ const app = new Elysia()
       .use(year_route)
       .use(user_route)
   )
+  .post("/upload", ({body, set }) => {
+    try {
+      console.log(body.file);
+      
+      const file = body.file;
+      // บันทึกไฟล์ที่อัพโหลด
+      const filePath = `uploads/${file.name}`;
+      console.log(`File uploaded: ${filePath}`);
+      return { message: "อัพโหลดไฟล์สำเร็จ", filePath };
+      
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      set.status = 500;
+      return { message: "เกิดข้อผิดพลาดในการอัพโหลดไฟล์" };
+      
+    }
+  }, {
+    body: t.Object({
+      file:t.File({format:"image/*"})
+    }),
+    detail: { tags: ["App"], description: "Upload file" }
+  })
   // Home Page
   .get(
     "/",

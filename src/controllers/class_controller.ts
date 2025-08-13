@@ -139,6 +139,46 @@ const get_class_by_id = async (app: Elysia) =>
     }
   );
 
+  const get_class_by_teacher_id = async (app: Elysia) =>
+  app.get(
+    "/by_teacher/:teacher_id",
+    async ({ params, set }) => {
+      try {
+        const { teacher_id } = params;
+        // ตรวจสอบว่ามี teacher_id หรือไม่
+        if (!teacher_id) {
+          set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
+          return { message: "ต้องการ ID ของครูเพื่อดึงชั้นปี" };
+        }
+        // ดึงชั้นปีตาม teacher_id
+        const classes = await ClassModel.find({ teacher_id }, { year_id: 0 });
+        if (classes.length === 0) {
+          set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
+          return { message: `ไม่พบชั้นปีสำหรับครู ID ${teacher_id}` };
+        }
+
+        set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
+        return {
+          message: `ดึงชั้นปีสำหรับครู ID ${teacher_id} สำเร็จ`,
+          classes,
+        };
+      } catch (error) {
+        set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
+        return {
+          message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถดึงชั้นปีได้",
+        };
+      }
+    },
+    {
+      params: t.Object({
+        teacher_id: t.String(),
+      }),
+      detail: {
+        tags: ["Class"],
+        description: "ดึงชั้นปีตาม ID ของครู",
+      },
+    }
+  );
 //   อัพเดตชั้นปี
 const update_class = async (app: Elysia) =>
   app.put(

@@ -3,7 +3,7 @@ import StudentModel from "../../models/users/student_model";
 // ฟังก์ชัน studentController สำหรับจัดการ Student
 const create = (app: Elysia) =>
   app.post(
-    "ฝ",
+    "/",
     async ({ body, set }) => {
       const { first_name, last_name, prefix, user_id, class_id } = body;
       try {

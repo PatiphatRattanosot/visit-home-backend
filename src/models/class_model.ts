@@ -5,6 +5,7 @@ export interface IClass extends Document {
   number: number; // หมายเลขห้องเรียน
   year_id: string; // ปีการศึกษา
   teacher_id: ObjectId | string;
+  students?: ObjectId[]; // รายชื่อนักเรียนในห้องเรียน
 }
 
 const ClassSchema = new Schema<IClass>(
@@ -13,6 +14,7 @@ const ClassSchema = new Schema<IClass>(
     number: { type: Number, required: true },
     year_id: { type: String, required: true },
     teacher_id: { type: Schema.Types.ObjectId, required: true, ref: "User" },
+    students: [{ type: Schema.Types.ObjectId, ref: "Student" }],
   },
   {
     timestamps: true,

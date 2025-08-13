@@ -24,14 +24,14 @@ interface IPersonalInfo {
 interface IRelationInfo {
   family_member: number;
   family_time: number;
-  father_relation: number;
-  mother_relation: number;
-  brother_relation: number;
-  sister_relation: number;
-  grand_parent_relation: number;
-  relatives_relation: number;
+  father_relation: string;
+  mother_relation: string;
+  brother_relation: string;
+  sister_relation: string;
+  grand_parent_relation: string;
+  relatives_relation: string;
   other_relative: string;
-  other_relation: number;
+  other_relation: string;
   when_student_alone: string;
   total_household_income: number;
   daily_total_to_school: number;
@@ -44,11 +44,11 @@ interface IRelationInfo {
 }
 
 interface IFamilyStatusInfo {
-  household_burdens: number[];
-  housing_type: number;
+  household_burdens: string[];
+  housing_type: string;
   housing_condition: string;
-  family_vehicles: number[];
-  less_than_one: number;
+  family_vehicles: string[];
+  less_than_one: string;
   owned_land: number;
   rented_land: number;
 }
@@ -59,18 +59,18 @@ interface IBehaviorAndRisk {
   distance_to_school: number;
   time_used: number;
   school_transport: string;
-  student_resp: number[];
+  student_resp: string[];
   student_resp_other: string;
-  hobbies: number[];
+  hobbies: string[];
   other_hobbies: string;
-  drugs_behav: number[];
-  violent_behav: number[];
+  drugs_behav: string[];
+  violent_behav: string[];
   other_violent_behav: string;
   sexual_behav: string[];
   gaming_behav: string[];
   other_gaming_behav: string;
-  computer_internet_access: number;
-  tech_use_behav: number;
+  computer_internet_access: string;
+  tech_use_behav: string;
   information_giver: string;
 }
 
