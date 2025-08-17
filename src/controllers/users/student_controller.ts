@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import StudentModel from "../../models/users/student_model";
+import { set } from "mongoose";
 // ฟังก์ชัน studentController สำหรับจัดการ Student
 const create = (app: Elysia) =>
   app.post(
@@ -92,7 +93,57 @@ const get_by_id = (app: Elysia) =>
       },
     }
   );
+const get_student_by_year_id = (app: Elysia) =>
+  app.get(
+    "/by_year/:year_id",
+    async (ctx: { set: any; params: any; store: any }) => {
+      try {
+        const { params, set, store } = ctx;
+        const email = store.user.email;
+        console.log(email);
 
+        const { year_id } = params;
+        if (!year_id) {
+          set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
+          return { message: "ต้องการปีการศึกษาเพื่อดึงนักเรียน" };
+        }
+        // ดึงนักเรียนตาม year_id
+        const students = await StudentModel.find({
+          email: email,
+          "yearly_data.year": year_id,
+        });
+        console.log(`ดึงนักเรียนสำหรับปีการศึกษา ${year_id}`, students);
+
+        if (students.length === 0) {
+          set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
+          return { message: `ไม่พบนักเรียนสำหรับปีการศึกษา ${year_id}` };
+        }
+
+        set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
+        
+        return {
+          message: `ดึงนักเรียนสำหรับปีการศึกษา ${year_id} สำเร็จ`,
+          students,
+        };
+      } catch (error) {
+        ctx.set.status = 500
+        return {
+          message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถดึงนักเรียนได้",
+        };
+      }
+    },
+    {
+      params: t.Object({
+        year_id: t.String(),
+      }),
+      detail: {
+        tags: ["Student"],
+        description: "ดึงนักเรียนตามปีการศึกษา",
+      },
+    }
+  );
+  
+  
 // อัพเดตข้อมูลหลักนักเรียน
 const update_student_info = (app: Elysia) =>
   app.put(
@@ -196,6 +247,7 @@ const StudentController = {
   create,
   get_all,
   get_by_id,
+  get_student_by_year_id,
   update_student_info,
   update_yearly_data,
 };

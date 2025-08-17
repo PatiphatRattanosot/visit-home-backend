@@ -52,6 +52,19 @@ const app = new Elysia()
           return { message: "Unauthorized" };
         }
       })
+      .state("user", { email: ""})
+  .derive(async ({ cookie: { auth }, jwt, store }) => {
+        if (!auth.value) return { email: "", role: "" };
+        const user = await jwt.verify(auth.value);
+        if (!user || typeof user !== "object") return { email: "", role: "" };
+
+        store.user = { email: user.email ? user.email.toString() : "" };
+
+        return {
+          email: user.email ?? "",
+          role: user.role ?? "",
+        };
+      })
       .use(class_route)
       .use(year_route)
       .use(user_route)

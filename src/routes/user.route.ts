@@ -24,9 +24,11 @@ export default (app:Elysia) =>
           // Student
           .group("/student", (app) => 
             app
+          
               .use(studentController.get_all)
               .use(studentController.create)
               .use(studentController.get_by_id)
+              .use(studentController.get_student_by_year_id)
               .use(studentController.update_student_info)
               .use(studentController.update_yearly_data)
             )
