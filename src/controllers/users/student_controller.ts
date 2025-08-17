@@ -1,6 +1,5 @@
 import { Elysia, t } from "elysia";
 import StudentModel from "../../models/users/student_model";
-import { set } from "mongoose";
 // ฟังก์ชัน studentController สำหรับจัดการ Student
 const create = (app: Elysia) =>
   app.post(
