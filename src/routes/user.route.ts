@@ -31,5 +31,6 @@ export default (app:Elysia) =>
               .use(studentController.get_student_by_year_id)
               .use(studentController.update_student_info)
               .use(studentController.update_yearly_data)
+              .use(studentController.update_student_profile)
             )
       )

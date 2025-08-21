@@ -188,7 +188,7 @@ const update_yearly_data = (app: Elysia) =>
   app.put("/yearly",
     async ({ body, set }) => {
       try {
-        const { _id: student_id, year_id } = body;
+        const { student_id, year_id } = body;
         if (!student_id || !year_id) {
           set.status = 400;
           return { message: "กรุณากรอกข้อมูลให้ครบถ้วน" };
@@ -230,7 +230,7 @@ const update_yearly_data = (app: Elysia) =>
     },
     {
       body: t.Object({
-        _id: t.Optional(t.String()),
+        student_id: t.Optional(t.String()),
         year_id: t.Optional(t.String()),
         personal_info: t.Optional(t.Any()),
         relation_info: t.Optional(t.Any()),
