@@ -34,7 +34,7 @@ const create = (app: Elysia) =>
           role: ["Student"],
           class_id,
         });
-        // await student.save();
+        await student.save();
         set.status = 201;
         return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student };
       } catch (err) {
@@ -186,38 +186,42 @@ const update_student_info = (app: Elysia) =>
 
 // อัพเดตข้อมูลรายปีของนักเรียน
 const update_yearly_data = (app: Elysia) =>
-  app.put(
-    "/:id/yearly/:year_id",
-    async ({ params, body, set }) => {
+  app.put("/",
+    async ({  body, set }) => {
       try {
-        const student = await StudentModel.findById(params.id);
+        const {_id: student_id, year_id } = body;
+        if (!student_id || !year_id) {
+          set.status = 400;
+          return { message: "กรุณากรอกข้อมูลให้ครบถ้วน" };
+        }
+        const student = await StudentModel.findById(student_id);
         if (!student) {
           set.status = 404;
           return { message: "ไม่พบข้อมูลนักเรียน" };
         }
-
         // รับไฟล์รูปจาก multipart/form-data
         let imageUrl = "";
-        if (body.image_url && body.image_url[0]) {
-          const file = body.image_url[0];
+        const file = body.file_image;
+        if (file) {
           // อ่าน buffer จากไฟล์
           const arrayBuffer = await file.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
           // สร้างชื่อไฟล์
-          const fileName = `${params.id}_${params.year_id}_${Date.now()}`;
+          const fileName = `${file.name}_${Date.now()}`;
+          const fileType = file.type || "image/jpeg"; // กำหนดค่า default เป็น image/jpeg
           // อัปโหลดไป Firebase Storage
           const { uploadImageToFirebase } = await import("../../utils/uploadImageToFirebase");
-          imageUrl = await uploadImageToFirebase(buffer, fileName);
+          imageUrl = await uploadImageToFirebase(buffer, fileName,fileType);
         }
 
         // หา yearly_data ที่ตรงกับ year_id
         let yearly = student.yearly_data.find(
-          (y: any) => y.year.toString() === params.year_id
+          (y: any) => y.year.toString() === year_id
         );
 
         if (!yearly) {
           yearly = {
-            year: params.year_id,
+            year: year_id,
             personal_info: body.personal_info ?? {},
             relation_info: body.relation_info ?? {},
             family_status_info: body.family_status_info ?? {},
@@ -245,13 +249,14 @@ const update_yearly_data = (app: Elysia) =>
       }
     },
     {
-      params: t.Object({ id: t.String(), year_id: t.String() }),
       body: t.Object({
+        _id: t.Optional(t.String()),
+        year_id: t.Optional(t.String()),
         personal_info: t.Optional(t.Any()),
         relation_info: t.Optional(t.Any()),
         family_status_info: t.Optional(t.Any()),
         behavior_and_risk: t.Optional(t.Any()),
-        image_url: t.Optional(t.Files()),
+        file_image: t.Optional(t.File()),
       }),
       detail: {
         tags: ["Student"],

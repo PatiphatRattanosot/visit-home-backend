@@ -71,9 +71,13 @@ const app = new Elysia()
   )
   .post("/upload", ({body, set }) => {
     try {
-      console.log(body.file);
+      console.log(body);
       
       const file = body.file;
+      if (!file) {
+        set.status = 400;
+        return { message: "No file uploaded" };
+      }
       // บันทึกไฟล์ที่อัพโหลด
       const filePath = `uploads/${file.name}`;
       console.log(`File uploaded: ${filePath}`);
@@ -87,7 +91,7 @@ const app = new Elysia()
     }
   }, {
     body: t.Object({
-      file:t.File({format:"image/*"})
+      file:t.Optional(t.File())
     }),
     detail: { tags: ["App"], description: "Upload file" }
   })
