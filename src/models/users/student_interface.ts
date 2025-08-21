@@ -90,6 +90,7 @@ interface IStudent extends Document {
   role: string[];
   user_id: string;
   class_id: ObjectId | string;
+  image_url?: string;
   yearly_data: IYearlyData[];
 }
 

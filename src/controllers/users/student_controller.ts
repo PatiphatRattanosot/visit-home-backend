@@ -190,18 +190,32 @@ const update_yearly_data = (app: Elysia) =>
     "/:id/yearly/:year_id",
     async ({ params, body, set }) => {
       try {
-        const student = (await StudentModel.findById(params.id)) 
+        const student = await StudentModel.findById(params.id);
         if (!student) {
           set.status = 404;
           return { message: "ไม่พบข้อมูลนักเรียน" };
         }
+
+        // รับไฟล์รูปจาก multipart/form-data
+        let imageUrl = "";
+        if (body.image_url && body.image_url[0]) {
+          const file = body.image_url[0];
+          // อ่าน buffer จากไฟล์
+          const arrayBuffer = await file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          // สร้างชื่อไฟล์
+          const fileName = `${params.id}_${params.year_id}_${Date.now()}`;
+          // อัปโหลดไป Firebase Storage
+          const { uploadImageToFirebase } = await import("../../utils/uploadImageToFirebase");
+          imageUrl = await uploadImageToFirebase(buffer, fileName);
+        }
+
         // หา yearly_data ที่ตรงกับ year_id
         let yearly = student.yearly_data.find(
           (y: any) => y.year.toString() === params.year_id
         );
 
         if (!yearly) {
-          // ถ้ายังไม่มีปีนี้ ให้เพิ่มใหม่ โดยกำหนดค่า default สำหรับ property ที่จำเป็น
           yearly = {
             year: params.year_id,
             personal_info: body.personal_info ?? {},
@@ -211,13 +225,17 @@ const update_yearly_data = (app: Elysia) =>
           };
           student.yearly_data.push(yearly);
         } else {
-          // ถ้ามีแล้ว ให้อัพเดตข้อมูล
           Object.assign(yearly, body);
+        }
+
+        // อัปเดต image_url ใน student
+        if (imageUrl) {
+          student.image_url = imageUrl;
         }
 
         await student.save();
         set.status = 200;
-        return { message: "แก้ไขข้อมูลรายปีนักเรียนสำเร็จ", yearly };
+        return { message: "แก้ไขข้อมูลรายปีนักเรียนสำเร็จ", yearly, image_url: imageUrl };
       } catch (err) {
         set.status = 500;
         return {
@@ -233,11 +251,11 @@ const update_yearly_data = (app: Elysia) =>
         relation_info: t.Optional(t.Any()),
         family_status_info: t.Optional(t.Any()),
         behavior_and_risk: t.Optional(t.Any()),
-        // ...เพิ่มตาม schema ของ yearly_data
+        image_url: t.Optional(t.Files()),
       }),
       detail: {
         tags: ["Student"],
-        description: "แก้ไขข้อมูลรายปีของนักเรียน",
+        description: "แก้ไขข้อมูลรายปีของนักเรียน (รองรับอัปโหลดรูป)",
       },
     }
   );
