@@ -99,7 +99,6 @@ const get_student_by_year_id = (app: Elysia) =>
       try {
         const { params, set, store } = ctx;
         const email = store.user.email;
-        console.log(email);
 
         const { year_id } = params;
         if (!year_id) {
@@ -111,7 +110,6 @@ const get_student_by_year_id = (app: Elysia) =>
           email: email,
           "yearly_data.year": year_id,
         });
-        console.log(`ดึงนักเรียนสำหรับปีการศึกษา ${year_id}`, students);
 
         if (students.length === 0) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
@@ -186,7 +184,7 @@ const update_student_info = (app: Elysia) =>
 
 // อัพเดตข้อมูลรายปีของนักเรียน
 const update_yearly_data = (app: Elysia) =>
-  app.put("/",
+  app.put("/yearly",
     async ({  body, set }) => {
       try {
         const {_id: student_id, year_id } = body;
