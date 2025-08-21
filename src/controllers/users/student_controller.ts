@@ -246,7 +246,7 @@ const update_yearly_data = (app: Elysia) =>
 // อัปเดตรูปโปรไฟล์นักเรียน (API แยก)
 const update_student_profile = (app: Elysia) =>
   app.put(
-    "/:id/profile-image",
+    "/profile-image",
     async ({ body, set }) => {
       try {
         const { student_id } = body;
