@@ -8,7 +8,7 @@ export default (app:Elysia) =>
             info: {
               title: "เอกสาร API ระบบเยี่ยมบ้าน",
               description: "description",
-              version: "0.3.0",
+              version: "0.4.0",
             },
             servers: [
               {
