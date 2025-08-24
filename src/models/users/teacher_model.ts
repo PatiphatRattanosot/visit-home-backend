@@ -10,6 +10,7 @@ interface ITeacher extends Document {
   user_id: string;
   phone: string;
   status: string;
+  class_id: Schema.Types.ObjectId | string;
 }
 
 const TeacherSchema = new Schema<ITeacher>(
@@ -25,7 +26,11 @@ const TeacherSchema = new Schema<ITeacher>(
     },
     status: {
       type: String,
-      default: "ทำงาน", 
+      default: "ทำงาน",
+    },
+    class_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Class",
     },
   },
   {

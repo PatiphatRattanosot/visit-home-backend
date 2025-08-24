@@ -1,10 +1,10 @@
+
 import { Elysia, t } from "elysia";
 import StudentModel from "../../models/users/student_model";
-
 // ฟังก์ชัน studentController สำหรับจัดการ Student
 const create = (app: Elysia) =>
   app.post(
-    "/students",
+    "/",
     async ({ body, set }) => {
       const { first_name, last_name, prefix, user_id, class_id } = body;
       try {
@@ -35,9 +35,9 @@ const create = (app: Elysia) =>
           role: ["Student"],
           class_id,
         });
-        // await student.save();
+        await student.save();
         set.status = 201;
-        return {message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student  };
+        return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student };
       } catch (err) {
         set.status = 500;
         return {
@@ -62,7 +62,7 @@ const create = (app: Elysia) =>
 
 const get_all = (app: Elysia) =>
   app.get(
-    "/students",
+    "",
     async () => {
       return await StudentModel.find();
     },
@@ -76,7 +76,7 @@ const get_all = (app: Elysia) =>
 
 const get_by_id = (app: Elysia) =>
   app.get(
-    "/students/:id",
+    "/:id",
     async ({ params, set }) => {
       const student = await StudentModel.findById(params.id);
       if (!student) {
@@ -93,10 +93,59 @@ const get_by_id = (app: Elysia) =>
       },
     }
   );
+const get_student_by_year_id = (app: Elysia) =>
+  app.get(
+    "/by_year/:year_id",
+    async (ctx: { set: any; params: any; store: any }) => {
+      try {
+        const { params, set, store } = ctx;
+        const email = store.user.email;
 
-  const update = (app: Elysia) =>
+        const { year_id } = params;
+        if (!year_id) {
+          set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
+          return { message: "ต้องการปีการศึกษาเพื่อดึงนักเรียน" };
+        }
+        // ดึงนักเรียนตาม year_id
+        const students = await StudentModel.find({
+          email: email,
+          "yearly_data.year": year_id,
+        });
+
+        if (students.length === 0) {
+          set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
+          return { message: `ไม่พบนักเรียนสำหรับปีการศึกษา ${year_id}` };
+        }
+
+        set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
+
+        return {
+          message: `ดึงนักเรียนสำหรับปีการศึกษา ${year_id} สำเร็จ`,
+          students,
+        };
+      } catch (error) {
+        ctx.set.status = 500
+        return {
+          message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถดึงนักเรียนได้",
+        };
+      }
+    },
+    {
+      params: t.Object({
+        year_id: t.String(),
+      }),
+      detail: {
+        tags: ["Student"],
+        description: "ดึงนักเรียนตามปีการศึกษา",
+      },
+    }
+  );
+
+
+// อัพเดตข้อมูลหลักนักเรียน
+const update_student_info = (app: Elysia) =>
   app.put(
-    "/students/:id",
+    "/:id",
     async ({ params, body, set }) => {
       const { first_name, last_name, prefix, user_id, class_id } = body;
       try {
@@ -109,7 +158,8 @@ const get_by_id = (app: Elysia) =>
           set.status = 404;
           return { message: "ไม่พบข้อมูลนักเรียนที่ต้องการแก้ไข" };
         }
-        return student;
+        set.status = 200;
+        return { message: "แก้ไขข้อมูลนักเรียนสำเร็จ", student };
       } catch (err) {
         set.status = 500;
         return {
@@ -128,18 +178,128 @@ const get_by_id = (app: Elysia) =>
       }),
       detail: {
         tags: ["Student"],
-        description: "แก้ไขข้อมูลนักเรียนตาม id",
+        description: "แก้ไขข้อมูลนักเรียนหลัก",
       },
     }
   );
 
+// อัพเดตข้อมูลรายปีของนักเรียน
+const update_yearly_data = (app: Elysia) =>
+  app.put("/yearly",
+    async ({ body, set }) => {
+      try {
+        const { student_id, year_id } = body;
+        if (!student_id || !year_id) {
+          set.status = 400;
+          return { message: "กรุณากรอกข้อมูลให้ครบถ้วน" };
+        }
+        const student = await StudentModel.findById(student_id);
+        if (!student) {
+          set.status = 404;
+          return { message: "ไม่พบข้อมูลนักเรียน" };
+        }
 
+        // หา yearly_data ที่ตรงกับ year_id
+        let yearly = student.yearly_data.find(
+          (y: any) => y.year.toString() === year_id
+        );
+
+        if (!yearly) {
+          yearly = {
+            year: year_id,
+            personal_info: body.personal_info ?? {},
+            relation_info: body.relation_info ?? {},
+            family_status_info: body.family_status_info ?? {},
+            behavior_and_risk: body.behavior_and_risk ?? {},
+          };
+          student.yearly_data.push(yearly);
+        } else {
+          Object.assign(yearly, body);
+        }
+
+        await student.save();
+        set.status = 200;
+        return { message: "แก้ไขข้อมูลรายปีนักเรียนสำเร็จ", yearly };
+      } catch (err) {
+        set.status = 500;
+        return {
+          message:
+            "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลรายปีนักเรียนได้",
+        };
+      }
+    },
+    {
+      body: t.Object({
+        student_id: t.Optional(t.String()),
+        year_id: t.Optional(t.String()),
+        personal_info: t.Optional(t.Any()),
+        relation_info: t.Optional(t.Any()),
+        family_status_info: t.Optional(t.Any()),
+        behavior_and_risk: t.Optional(t.Any()),
+      }),
+      detail: {
+        tags: ["Student"],
+        description: "แก้ไขข้อมูลรายปีของนักเรียน",
+      },
+    }
+  );
+// อัปเดตรูปโปรไฟล์นักเรียน (API แยก)
+const update_student_profile = (app: Elysia) =>
+  app.put(
+    "/profile-image",
+    async ({ body, set }) => {
+      try {
+        const { student_id } = body;
+        if (!student_id) {
+          set.status = 400;
+          return { message: "กรุณากรอกข้อมูลไอดีนักเรียน" };
+        }
+        const student = await StudentModel.findById(student_id);
+        if (!student) {
+          set.status = 404;
+          return { message: "ไม่พบข้อมูลนักเรียน" };
+        }
+
+        const file = body.file_image;
+        if (!file) {
+          set.status = 400;
+          return { message: "กรุณาอัปโหลดไฟล์รูปภาพ" };
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const fileName = `${file.name}_${Date.now()}`;
+        const { uploadImageToFirebase } = await import("../../utils/uploadImageToFirebase");
+        const imageUrl = await uploadImageToFirebase(buffer, fileName, file.type);
+        if (!imageUrl) {
+          set.status = 500;
+          return { message: "ไม่สามารถอัปโหลดรูปภาพได้" };
+        }
+        student.image_url = imageUrl;
+        await student.save();
+        set.status = 200;
+        return { message: "อัปเดตรูปโปรไฟล์สำเร็จ", image_url: imageUrl };
+      } catch (err) {
+        set.status = 500;
+        return { message: "เซิฟเวอร์เกิดข้อผิดพลาด ไม่สามารถอัปเดตรูปโปรไฟล์ได้" };
+      }
+    },
+    {
+      body: t.Object({ file_image: t.File(), student_id: t.Optional(t.String()) }),
+      detail: {
+        tags: ["Student"],
+        description: "อัปเดตรูปโปรไฟล์นักเรียน",
+      },
+    }
+  );
 const StudentController = {
   create,
   get_all,
   get_by_id,
-  update,
-  
+  get_student_by_year_id,
+  update_student_info,
+  update_yearly_data,
+  update_student_profile,
 };
 
 export default StudentController;

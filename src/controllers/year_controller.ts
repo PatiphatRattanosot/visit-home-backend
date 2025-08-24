@@ -97,17 +97,17 @@ const get_years = async (app: Elysia) =>
 // ฟังก์ชันสำหรับดึงข้อมูลปีการศึกษาโดยใช้ year_id
 const get_year_by_id = async (app: Elysia) =>
   app.get(
-    "/:year_id",
+    "/:year",
     async ({ params, set }) => {
       try {
-        const { year_id } = params; // ดึง year_id จากพารามิเตอร์
-        const year = await YearModel.findById(year_id); // ค้นหาปีการศึกษาตาม year_id
-        if (!year) {
+        const { year } = params; // ดึง year_id จากพารามิเตอร์
+        const yearData = await YearModel.find({year}); // ค้นหาปีการศึกษาตาม year_id
+        if (!yearData) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: "ไม่พบปีการศึกษานี้ในระบบ" };
         }
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
-        return year; // ส่งคืนปีการศึกษา
+        return yearData; // ส่งคืนปีการศึกษา
       } catch (error) {
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
         return {
@@ -115,7 +115,7 @@ const get_year_by_id = async (app: Elysia) =>
         };
       }
     },
-    {
+    { params: t.Object({ year: t.Number() }),
       detail: {
         tags: ["Year"],
         description: "ดูปีการศึกษา",

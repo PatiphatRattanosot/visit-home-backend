@@ -96,7 +96,8 @@ const get_teacher_by_id = async (app: Elysia) =>
       try {
         const teacher = await TeacherModel.findOne({
           _id,
-        });
+        }).populate("class_id"); // ค้นหาครูที่ปรึกษาตาม _id และตรวจสอบว่ามี class_id อยู่หรือ
+        
         if (!teacher) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: "ไม่พบข้อมูลครูที่ปรึกษานี้ในระบบ" };

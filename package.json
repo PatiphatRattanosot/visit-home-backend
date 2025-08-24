@@ -12,9 +12,11 @@
     "@elysiajs/jwt": "^1.2.0",
     "@elysiajs/swagger": "^1.2.2",
     "elysia": "latest",
+    "firebase": "^12.1.0",
     "mongoose": "^8.13.2"
   },
   "devDependencies": {
+    "@types/firebase": "^3.2.3",
     "bun-types": "latest"
   },
   "module": "src/index.js"
