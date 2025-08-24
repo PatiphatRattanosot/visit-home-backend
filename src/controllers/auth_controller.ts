@@ -31,7 +31,7 @@ const sign = async (app: Elysia) =>
             return { message: "ต้องการอีเมล" };
           }
 
-          const user = await UserModel.findOne({ email: email }); // ค้นหาผู้ใช้ในฐานข้อมูลด้วย email
+          const user = await UserModel.findOne({ email: email }).select('-yearly_data -image_url'); 
 
           // หากไม่พบผู้ใช้
           if (!user) {
