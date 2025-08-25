@@ -299,5 +299,6 @@ const ClassController = {
   get_class_by_id,
   update_class,
   delete_class,
+  get_class_by_teacher_id
 };
 export default ClassController;
