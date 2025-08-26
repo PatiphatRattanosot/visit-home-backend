@@ -110,8 +110,9 @@ const get_class_by_id = async (app: Elysia) =>
         // ดึงชั้นปีตาม class_id
         const class_data = await ClassModel.findById(class_id, {
           year_id: 0,
-        }).populate("teacher_id", "first_name last_name")
-          .populate("students");
+        })
+        .populate("teacher_id", "first_name last_name")
+        .populate("students", "prefix first_name last_name");
         if (!class_data) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: `ไม่พบชั้นปีสำหรับ ID ${class_id}` };
