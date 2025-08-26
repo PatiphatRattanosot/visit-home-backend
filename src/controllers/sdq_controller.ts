@@ -29,6 +29,8 @@ const create_sdq = (app: Elysia) =>
                 set.status = 201;
                 return { message: "เพิ่มข้อมูล SDQ สำเร็จ", sdq };
             } catch (error) {
+                console.log(error);
+                
                 set.status = 500;
                 return {message:"เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูล SDQ ได้"}
             }
@@ -50,8 +52,8 @@ const create_sdq = (app: Elysia) =>
 
         //ดึงข้อมูล SDQ ตาม student_id และ year_id
     const get_sdq_by_student_and_year = (app: Elysia) =>
-    app.get(
-        "/",
+    app.post(
+        "/by-student-year",
         async ({ body, set }) => {
             try {
                 const { student_id, year_id } = body;
@@ -59,12 +61,17 @@ const create_sdq = (app: Elysia) =>
                     set.status = 400;
                     return { message: "กรุณาระบุ student_id และ year_id" };
                 }
-                const sdq = await SDQModel.findOne({ student_id, year_id });
+                // populate student and year
+                const sdq = await SDQModel.findOne({ student_id, year_id })
+                    .populate("student_id", "first_name last_name")
+                    .populate("year_id", "year");
+                console.log(sdq);
                 if (!sdq) {
                     set.status = 404;
                     return { message: "ไม่พบข้อมูล SDQ" };
                 }
-                return sdq;
+                set.status = 200;
+                return {message: "ดึงข้อมูล SDQ สำเร็จ", sdq };
             } catch (error) {
                 set.status = 500;
                 return { message: "เกิดข้อผิดพลาด", error };
@@ -107,7 +114,33 @@ const update_sdq = (app: Elysia) =>
                 comment: t.Optional(t.String()),
                 assessor: t.Optional(t.String()),
                 question: t.Optional(
-                    t.Object({})
+                    t.Object({
+                        question_1: t.Number(),
+                        question_2: t.Number(),
+                        question_3: t.Number(),
+                        question_4: t.Number(),
+                        question_5: t.Number(),
+                        question_6: t.Number(),
+                        question_7: t.Number(),
+                        question_8: t.Number(),
+                        question_9: t.Number(),
+                        question_10: t.Number(),
+                        question_11: t.Number(),
+                        question_12: t.Number(),
+                        question_13: t.Number(),
+                        question_14: t.Number(),
+                        question_15: t.Number(),
+                        question_16: t.Number(),
+                        question_17: t.Number(),
+                        question_18: t.Number(),
+                        question_19: t.Number(),
+                        question_20: t.Number(),
+                        question_21: t.Number(),
+                        question_22: t.Number(),
+                        question_23: t.Number(),
+                        question_24: t.Number(),
+                        question_25: t.Number(),
+                    })
                 ),
             }),
             detail: {
