@@ -1,14 +1,14 @@
 import { Schema, model, Document } from "mongoose";
 
-const SDQCRITERIA = [1, 2, 3];
+const SDQCRITERIA = [0, 1, 2];
 
 const SDQSchema = new Schema(
   {
     status: { type: Boolean, default: false },
-    student_id: { type: String, required: true, unique: true },
-    year_id: { type: String, required: true },
+    student_id: { type: Schema.Types.ObjectId, ref: "Student", required: true },
+    year_id: { type: Schema.Types.ObjectId, ref: "Year", required: true },
     comment: { type: String, default: "" },
-    assessor: { type: String, enum: ["ครู", "นักเรัยน", "ผู้ปกครอง"] },
+    assessor: { type: String, enum: ["Teacher", "Student", "Parent"] },
     question: {
       question_1: { type: Number, enum: SDQCRITERIA },
       question_2: { type: Number, enum: SDQCRITERIA },
