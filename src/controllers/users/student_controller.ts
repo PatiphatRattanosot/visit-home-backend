@@ -1,11 +1,13 @@
 
 import { Elysia, t } from "elysia";
 import StudentModel from "../../models/users/student_model";
+import { add_student_to_class } from "../class_controller";
 // ฟังก์ชัน studentController สำหรับจัดการ Student
 const create = (app: Elysia) =>
   app.post(
-    "/",
+    "/crate",
     async ({ body, set }) => {
+
       const { first_name, last_name, prefix, user_id, class_id } = body;
       try {
         // ตรวจสอบว่ามี user_id หรือไม่
@@ -36,8 +38,15 @@ const create = (app: Elysia) =>
           class_id,
         });
         await student.save();
-        set.status = 201;
-        return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student };
+
+        if (class_id && student._id) {
+          const res = await add_student_to_class(class_id, student._id.toString());
+          if (res == true) {
+            set.status = 201;
+            return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student };
+          }
+        }
+
       } catch (err) {
         set.status = 500;
         return {
