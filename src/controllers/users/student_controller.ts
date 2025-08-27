@@ -92,7 +92,7 @@ const get_by_id = (app: Elysia) =>
         set.status = 404;
         return { error: "Student not found" };
       }
-      return student;
+      return { message: "ดึงข้อมูลนักเรียนสำเร็จ", student };
     },
     {
       params: t.Object({ id: t.String() }),
