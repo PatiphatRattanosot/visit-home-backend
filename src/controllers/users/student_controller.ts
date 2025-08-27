@@ -5,7 +5,7 @@ import { add_student_to_class } from "../class_controller";
 // ฟังก์ชัน studentController สำหรับจัดการ Student
 const create = (app: Elysia) =>
   app.post(
-    "/crate",
+    "/create",
     async ({ body, set }) => {
 
       const { first_name, last_name, prefix, user_id, class_id } = body;
