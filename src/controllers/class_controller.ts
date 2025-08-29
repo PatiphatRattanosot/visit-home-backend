@@ -111,7 +111,7 @@ const get_class_by_id = async (app: Elysia) =>
         const class_data = await ClassModel.findById(class_id, {
           year_id: 0,
         }).populate("teacher_id", "first_name last_name")
-        .populate("students");
+          .populate("students");
         if (!class_data) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: `ไม่พบชั้นปีสำหรับ ID ${class_id}` };
@@ -139,7 +139,7 @@ const get_class_by_id = async (app: Elysia) =>
     }
   );
 
-  const get_class_by_teacher_id = async (app: Elysia) =>
+const get_class_by_teacher_id = async (app: Elysia) =>
   app.get(
     "/by_teacher/:teacher_id",
     async ({ params, set }) => {
@@ -293,19 +293,42 @@ const delete_class = async (app: Elysia) =>
     }
   );
 
-export const add_student_to_class = async (class_id: string  ,student_id: string) =>{
-try {
-  if(!class_id || !student_id) return false
-  const class_data = await ClassModel.findById(class_id)
-  if(!class_data) return false
-  if(class_data.students && class_data.students.includes(student_id as any)) return true
-  class_data.students = class_data.students ? [...class_data.students,student_id as any] : [student_id as any]
-  await class_data.save()
-  return true
-} catch (error) {
-  return false
-}
+export const add_student_to_class = async (class_id: string, student_id: string) => {
+  try {
+    if (!class_id || !student_id) return false
+    const class_data = await ClassModel.findById(class_id)
+    if (!class_data) return false
+    if (class_data.students && class_data.students.includes(student_id as any)) return true
+    class_data.students = class_data.students ? [...class_data.students, student_id as any] : [student_id as any]
+    await class_data.save()
+    return true
+  } catch (error) {
+    return false
   }
+}
+
+export const delete_student_from_class = async (student_id: string, class_id: string) => {
+  try {
+    if (!class_id || !student_id) {
+      return { message: `ต้องการ class_id และ student_id`, status: 400, t: false }
+    }
+    console.log(class_id, student_id);
+    
+    const class_data = await ClassModel.findById(class_id)
+    if (!class_data){
+      return { message: `ไม่พบชั้นปีที่มี ID ${class_id}`, status: 404, t: false }
+    }
+    if (!class_data.students || !class_data.students.includes(student_id as any)) {
+      return { message: `ไม่พบนักเรียนที่มี ID ${student_id} ในชั้นปีนี้`, status: 404, t: false }
+    }
+    class_data.students = class_data.students.filter(sid => sid.toString() !== student_id
+      .toString())
+    await class_data.save()
+    return { message: `ลบนักเรียนที่มี ID ${student_id} ออกจากชั้นปีสำเร็จ`, status: 200, t: true, data: class_data }
+  } catch (error) {
+    return { message: `เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถลบนักเรียนออกจากชั้นปีได้`, status: 500, t: false }
+  }
+}
 
 const ClassController = {
   create_class,

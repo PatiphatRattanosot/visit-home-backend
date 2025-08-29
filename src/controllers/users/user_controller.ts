@@ -1,5 +1,6 @@
 import UserModel from "../../models/users/user_model";
 import { Elysia, t } from "elysia";
+import { delete_student_from_class } from "../../controllers/class_controller";
 
 // ฟังก์ชัน get_users เพื่อดึงข้อมูลผู้ใช้ทั้งหมดจากฐานข้อมูล
 const get_users = async (app: Elysia) =>
@@ -30,14 +31,23 @@ const delete_user = async (app: Elysia) =>
     "/:email",
     async ({ params: { email }, set }) => {
       try {
-        const user = await UserModel.findOneAndDelete({ email }, { new: true });
+        const user = await UserModel.findOneAndDelete({ email }, { new: true }) as any;
         if (!user) {
           set.status = 404;
           return { message: "ไม่พบผู้ใช้" };
         }
-        const user_name = `${user.first_name} ${user.last_name}`;
-        set.status = 200;
-        return { message: `ลบผู้ใช้ ${user_name} สำเร็จ` };
+        if (user.role.includes("Student") && user.class_id) {
+          const res = await delete_student_from_class(user._id.toString(), user.class_id.toString());
+          console.log(res);
+          if (res.t === true) {
+            const user_name = `${user.first_name} ${user.last_name}`;
+            set.status = 200;
+            return { message: `ลบผู้ใช้ ${user_name} สำเร็จ` };
+          } else {
+            set.status = res.status;
+            return { message: res.message };
+          }
+        }
       } catch (error) {
         set.status = 500;
         return { message: `เซิฟเวอร์ผิดพลาดไม่สามารถลบผู้ใช้ได้` };
