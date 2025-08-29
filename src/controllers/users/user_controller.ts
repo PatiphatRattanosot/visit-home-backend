@@ -38,7 +38,7 @@ const delete_user = async (app: Elysia) =>
         }
         if (user.role.includes("Student") && user.class_id) {
           const res = await delete_student_from_class(user._id.toString(), user.class_id.toString());
-          console.log(res);
+          
           if (res.t === true) {
             const user_name = `${user.first_name} ${user.last_name}`;
             set.status = 200;

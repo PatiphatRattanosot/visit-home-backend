@@ -312,7 +312,6 @@ export const delete_student_from_class = async (student_id: string, class_id: st
     if (!class_id || !student_id) {
       return { message: `ต้องการ class_id และ student_id`, status: 400, t: false }
     }
-    console.log(class_id, student_id);
     
     const class_data = await ClassModel.findById(class_id)
     if (!class_data){
