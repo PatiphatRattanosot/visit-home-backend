@@ -203,7 +203,7 @@ const delete_year = async (app: Elysia) =>
         }
 
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
-        return { message: `ลบปีการศึกษา ${year_id} สำเร็จ` };
+        return { message: `ลบปีการศึกษา ${year.year} สำเร็จ` };
       } catch (error) {
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
         return {
