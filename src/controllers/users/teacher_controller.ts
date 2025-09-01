@@ -136,14 +136,14 @@ const update_teacher = async (app: Elysia) =>
         teacher.prefix = prefix;
         teacher.phone = phone;
         teacher.status = status; 
-        
+
         let message: string = "";
         if (teacher.role.includes("Admin")) {
           message = "อัพเดทข้อมูลเจ้าหน้าที่เรียบร้อย"
         } else {
           message = "อัพเดทข้อมูลครูที่ปรึกษาเรียบร้อย"
         }
-        // await teacher.save(); // บันทึกข้อมูลที่อัปเดตลงในฐานข้อมูล
+        await teacher.save(); // บันทึกข้อมูลที่อัปเดตลงในฐานข้อมูลs
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
         return { message: message, teacher };
       } catch (error) {
