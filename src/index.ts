@@ -13,6 +13,7 @@ import auth_route from "./routes/auth.route";
 import class_route from "./routes/class.route";
 import year_route from "./routes/year.route";
 import user_route from "./routes/user.route";
+import sdq_route from "./routes/sdq.route";
 const app = new Elysia()
   //middleware
   // HTML
@@ -68,6 +69,7 @@ const app = new Elysia()
       .use(class_route)
       .use(year_route)
       .use(user_route)
+      .use(sdq_route)
   )
   .post("/upload", ({body, set }) => {
     try {

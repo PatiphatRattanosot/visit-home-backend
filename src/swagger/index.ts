@@ -45,6 +45,10 @@ export default (app:Elysia) =>
                 name: "Class",
                 description: "API สำหรับการจัดการชั้นเรียน",
               },
+              {
+                name: "SDQ",
+                description: "API สำหรับการจัดการข้อมูล SDQ",
+              }
             ],
           },
         })
