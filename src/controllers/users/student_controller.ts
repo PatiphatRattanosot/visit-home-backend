@@ -1,4 +1,3 @@
-
 import { Elysia, t } from "elysia";
 import StudentModel from "../../models/users/student_model";
 import { IStudent, IYearlyData } from "../../models/users/student_interface";
@@ -8,8 +7,7 @@ const create = (app: Elysia) =>
   app.post(
     "/create",
     async ({ body, set }) => {
-
-      const { first_name, last_name, prefix, user_id, class_id } = body;
+      const { first_name, last_name, prefix, user_id, class_id, phone } = body;
       try {
         // ตรวจสอบว่ามี user_id หรือไม่
         if (!user_id) {
@@ -18,7 +16,7 @@ const create = (app: Elysia) =>
         }
         const email = `${user_id}bp@bangpaeschool.ac.th`;
         // ตรวจสอบว่ามีข้อมูลที่จำเป็นหรือไม่
-        if (!first_name || !last_name || !prefix || !class_id) {
+        if (!first_name || !last_name || !prefix || !class_id || !phone) {
           set.status = 400;
           return { message: "กรุณากรอกข้อมูลให้ครบถ้วน" };
         }
@@ -37,6 +35,7 @@ const create = (app: Elysia) =>
           email,
           role: ["Student"],
           class_id,
+          phone,
         });
         await student.save();
 
@@ -62,6 +61,7 @@ const create = (app: Elysia) =>
         prefix: t.String(),
         user_id: t.String(),
         class_id: t.String(),
+        phone: t.String(),
       }),
       detail: {
         tags: ["Student"],
@@ -128,7 +128,17 @@ const get_student_by_year_id = (app: Elysia) =>
         }
         const filteredStudents = students.map(student => {
           const obj = student.toObject();
-          obj.yearly_data = obj.yearly_data.filter((data: IYearlyData) => data.year.toString() === year_id);
+          obj.yearly_data = obj.yearly_data
+            .filter((data: IYearlyData) => data.year.toString() === year_id)
+            .map((data: IYearlyData) => ({
+              year: data.year,
+              personal_info: data.personal_info,
+              relationship_info: data.relationship_info,
+              family_info: data.family_info,
+              behavior_info: data.behavior_info,
+              risk_info: data.risk_info,
+              additional_info: data.additional_info,
+            }));
           return obj;
         });
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
@@ -161,11 +171,11 @@ const update_student_info = (app: Elysia) =>
   app.put(
     "/:id",
     async ({ params, body, set }) => {
-      const { first_name, last_name, prefix, user_id, class_id } = body;
+      const { first_name, last_name, prefix, user_id, class_id, phone } = body;
       try {
         const student = await StudentModel.findByIdAndUpdate(
           params.id,
-          { first_name, last_name, prefix, user_id, class_id },
+          { first_name, last_name, prefix, user_id, class_id, phone },
           { new: true }
         );
         if (!student) {
@@ -189,6 +199,7 @@ const update_student_info = (app: Elysia) =>
         prefix: t.String(),
         user_id: t.String(),
         class_id: t.String(),
+        phone: t.String(),
       }),
       detail: {
         tags: ["Student"],
@@ -222,9 +233,11 @@ const update_yearly_data = (app: Elysia) =>
           yearly = {
             year: year_id,
             personal_info: body.personal_info ?? {},
-            relation_info: body.relation_info ?? {},
-            family_status_info: body.family_status_info ?? {},
-            behavior_and_risk: body.behavior_and_risk ?? {},
+            relationship_info: body.relationship_info ?? {},
+            family_info: body.family_info ?? {},
+            behavior_info: body.behavior_info ?? {},
+            risk_info: body.risk_info ?? {},
+            additional_info: body.additional_info ?? {},
           };
           student.yearly_data.push(yearly);
         } else {
@@ -247,9 +260,11 @@ const update_yearly_data = (app: Elysia) =>
         student_id: t.Optional(t.String()),
         year_id: t.Optional(t.String()),
         personal_info: t.Optional(t.Any()),
-        relation_info: t.Optional(t.Any()),
-        family_status_info: t.Optional(t.Any()),
-        behavior_and_risk: t.Optional(t.Any()),
+        relationship_info: t.Optional(t.Any()),
+        family_info: t.Optional(t.Any()),
+        behavior_info: t.Optional(t.Any()),
+        risk_info: t.Optional(t.Any()),
+        additional_info: t.Optional(t.Any()),
       }),
       detail: {
         tags: ["Student"],
