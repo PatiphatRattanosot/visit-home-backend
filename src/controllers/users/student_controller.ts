@@ -120,18 +120,22 @@ const get_student_by_year_id = (app: Elysia) =>
         const students = await StudentModel.find({
           email: email,
           "yearly_data.year": year_id,
-        });
+        }).populate("class_id", "room number");
 
         if (students.length === 0) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: `ไม่พบนักเรียนสำหรับปีการศึกษา ${year_id}` };
         }
-
+        const filteredStudents = students.map(student => {
+          const obj = student.toObject();
+          obj.yearly_data = obj.yearly_data.filter((data: IYearlyData) => data.year.toString() === year_id);
+          return obj;
+        });
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
 
         return {
           message: `ดึงนักเรียนสำหรับปีการศึกษา ${year_id} สำเร็จ`,
-          students,
+          students: filteredStudents,
         };
       } catch (error) {
         ctx.set.status = 500
