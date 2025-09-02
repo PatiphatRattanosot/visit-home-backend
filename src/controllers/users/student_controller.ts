@@ -309,13 +309,13 @@ export const auto_create_student = async (class_id: string, new_year: string) =>
     return { type: false }
   }
   let new_students: any[] = []
-  old_students.map(async (old_student) => {
-    const res = await auto_update_for_student(old_student, new_year) as any;
-    if (res?.type === true) new_students.push({ _id: res.student_id })
-
-    return { type: false }
-  })
-  return {  type: true, new_students}
+  await Promise.all(
+    old_students.map(async (old_student) => {
+      const res = await auto_update_for_student(old_student, new_year) as any;
+      if (res?.type === true) new_students.push({ _id: res.student_id })
+    })
+  );
+  return { type: true, new_students }
 }
 
 const auto_update_for_student = async (old_student: IStudent, new_year: string) => {
