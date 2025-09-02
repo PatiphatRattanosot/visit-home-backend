@@ -80,8 +80,8 @@ interface IRiskInfo {
 
 // Page 6 Additional Information
 interface IAdditionalInfo {
-  support_from_organize: string;
-  support_from_school: string;
+  support_from_organize: string[];
+  support_from_school: string[];
   parent_concern: string;
 }
 

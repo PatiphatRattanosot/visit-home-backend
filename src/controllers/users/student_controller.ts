@@ -249,6 +249,8 @@ const update_yearly_data = (app: Elysia) =>
         return { message: "แก้ไขข้อมูลรายปีนักเรียนสำเร็จ", yearly };
       } catch (err) {
         set.status = 500;
+        console.log(err);
+        
         return {
           message:
             "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลรายปีนักเรียนได้",
