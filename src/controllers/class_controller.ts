@@ -356,7 +356,7 @@ const auto_create_class = async (class_data: IClass, new_year: string) => {
 
 
   if (class_data.room >= 6) {
-    const room = `${Date.now()}`
+    const room = `GRAD_${new Date().getFullYear() + 543}`
     const grad_class = new ClassModel({
       status: false,
       room: room,

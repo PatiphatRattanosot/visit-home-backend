@@ -58,7 +58,7 @@ const auto_create_year = async (app: Elysia) =>
         const new_year = new YearModel({ year: Number(old_year.year) + 1 }); // สร้างปีการศึกษาใหม่ที่เป็นปีถัดไป
 
         await new_year.save(); // บันทึกปีการศึกษาใหม่
-        console.log(new_year);
+        // console.log(new_year);
 
         if (old_year._id && new_year._id) {
           const res = await auto_update_classes_by_year(old_year._id.toString(), new_year._id.toString());
@@ -67,8 +67,8 @@ const auto_create_year = async (app: Elysia) =>
             return { message: `สร้างปีการศึกษา ${new_year.year} สำเร็จ` };
           }
         }
-        const test_delete = await YearModel.findByIdAndDelete(new_year._id);
-        console.log("deleted :", test_delete);
+         await YearModel.findByIdAndDelete(new_year._id);
+        // console.log(delete_year);
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
         return { message: `สร้างปีการศึกษา ${new_year.year} ไม่สำเร็จ` };
 
