@@ -1,6 +1,7 @@
 import { Schema, model, Document, ObjectId } from "mongoose";
 
 export interface IClass extends Document {
+  status: boolean
   room: number; // ชื่อห้องเรียน
   number: number; // หมายเลขห้องเรียน
   year_id: string; // ปีการศึกษา
@@ -10,6 +11,7 @@ export interface IClass extends Document {
 
 const ClassSchema = new Schema<IClass>(
   {
+    status: { type: Boolean, default: true },
     room: { type: Number, required: true },
     number: { type: Number, required: true },
     year_id: { type: String, required: true },

@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import ClassModel, { IClass } from "../models/class_model";
-
+import { auto_create_student } from "./users/student_controller";
 const create_class = async (app: Elysia) =>
   app.post(
     "/",
@@ -111,8 +111,8 @@ const get_class_by_id = async (app: Elysia) =>
         const class_data = await ClassModel.findById(class_id, {
           year_id: 0,
         })
-        .populate("teacher_id", "first_name last_name")
-        .populate("students", "prefix first_name last_name");
+          .populate("teacher_id", "first_name last_name")
+          .populate("students", "prefix first_name last_name");
         if (!class_data) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: `ไม่พบชั้นปีสำหรับ ID ${class_id}` };
@@ -331,6 +331,58 @@ export const delete_student_from_class = async (student_id: string, class_id: st
   }
 }
 
+export const auto_update_classes_by_year = async (old_year: string, new_year: string) => {
+  try {
+    const old_classes = await ClassModel.find({ year_id: old_year });
+    if (old_classes.length === 0) {
+      return { message: `ไม่พบชั้นปีสำหรับปีการศึกษา ${old_year}`, status: 404, type: false }
+    }
+    for (const old_class of old_classes) {
+      await auto_create_class(old_class, new_year);
+    }
+
+    return { message: `อัพเดตชั้นปีจากปีการศึกษา ${old_year} ไปยัง ${new_year} สำเร็จ`, status: 200, type: true }
+
+  } catch (error) {
+    return { message: `เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถอัพเดตชั้นปีได้`, status: 500, type: false }
+  }
+}
+
+const auto_create_class = async (class_data: IClass, new_year: string) => {
+  console.log(class_data._id);
+  if (!class_data._id) {
+    return { message: "ไม่มี class id", status: 400, type: false }
+  }
+
+
+  if (class_data.room >= 6) {
+    const room = `GRAD_${new Date().getFullYear() + 543}`
+    const grad_class = new ClassModel({
+      status: false,
+      room: room,
+      number: class_data.number,
+      year_id: new_year,
+      teacher_id: "",
+      students: class_data.students
+    })
+    await grad_class.save();
+    return;
+  }
+  const res = await auto_create_student(class_data._id.toString(), new_year) as any;
+  if (res?.type === true) {
+    const { students } = res
+    const new_class = new ClassModel({
+      room: (class_data.room + 1),
+      number: class_data.number,
+      year_id: new_year,
+      teacher_id: class_data.teacher_id,
+      students: students
+    });
+    await new_class.save();
+    return
+  }
+
+}
 const ClassController = {
   create_class,
   get_classes_by_year,
