@@ -107,6 +107,7 @@ const StudentSchema = new Schema(
     user_id: { type: String, required: true, unique: true },
     class_id: { type: Schema.Types.ObjectId, ref: "Class", required: true },
     image_url: { type: String, default: "" },
+    phone: { type: String, default: "" },
     yearly_data: [YearlyDataSchema],
   },
   {
