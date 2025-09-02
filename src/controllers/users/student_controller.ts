@@ -1,6 +1,7 @@
 
 import { Elysia, t } from "elysia";
 import StudentModel from "../../models/users/student_model";
+import { IStudent, IYearlyData } from "../../models/users/student_interface";
 import { add_student_to_class } from "../class_controller";
 // ฟังก์ชัน studentController สำหรับจัดการ Student
 const create = (app: Elysia) =>
@@ -301,6 +302,45 @@ const update_student_profile = (app: Elysia) =>
       },
     }
   );
+
+export const auto_create_student = async (class_id: string, new_year: string) => {
+  const old_students = await StudentModel.find({ class_id: class_id });
+  if (old_students.length <= 0) {
+    return { type: false }
+  }
+  let new_students: any[] = []
+  old_students.map(async (old_student) => {
+    const res = await auto_update_for_student(old_student, new_year) as any;
+    if (res?.type === true) new_students.push({ _id: res.student_id })
+
+    return { type: false }
+  })
+  return {  type: true, new_students}
+}
+
+const auto_update_for_student = async (old_student: IStudent, new_year: string) => {
+  try {
+    const existing_student = await StudentModel.findOne({ user_id: old_student.user_id, "yearly_data.year": new_year });
+    if (existing_student) {
+      return { type: false }
+    }
+
+    const old_personal_info = old_student.yearly_data.find((y) => y.year.toString() === old_student.yearly_data[old_student.yearly_data.length - 1].year.toString())?.personal_info || {}
+
+    const new_yearly_data = {
+      year: new_year,
+      personal_info: old_personal_info
+    } as IYearlyData
+    const update_student = await StudentModel.findByIdAndUpdate({ _id: old_student._id })
+    update_student?.yearly_data.push(new_yearly_data)
+    await update_student?.save()
+    return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", status: 201, type: true, student_id: update_student?._id }
+  } catch (error) {
+    return { type: false }
+  }
+}
+
+
 const StudentController = {
   create,
   get_all,
