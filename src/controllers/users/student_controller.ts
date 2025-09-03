@@ -1,4 +1,3 @@
-
 import { Elysia, t } from "elysia";
 import StudentModel from "../../models/users/student_model";
 import { IStudent, IYearlyData } from "../../models/users/student_interface";
@@ -8,7 +7,6 @@ const create = (app: Elysia) =>
   app.post(
     "/create",
     async ({ body, set }) => {
-
       const { first_name, last_name, prefix, user_id, class_id } = body;
       try {
         // ตรวจสอบว่ามี user_id หรือไม่
@@ -18,7 +16,7 @@ const create = (app: Elysia) =>
         }
         const email = `${user_id}bp@bangpaeschool.ac.th`;
         // ตรวจสอบว่ามีข้อมูลที่จำเป็นหรือไม่
-        if (!first_name || !last_name || !prefix || !class_id) {
+        if (!first_name || !last_name || !prefix || !class_id ) {
           set.status = 400;
           return { message: "กรุณากรอกข้อมูลให้ครบถ้วน" };
         }
@@ -47,7 +45,6 @@ const create = (app: Elysia) =>
             return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student };
           }
         }
-
       } catch (err) {
         set.status = 500;
         return {
@@ -120,18 +117,24 @@ const get_student_by_year_id = (app: Elysia) =>
         const students = await StudentModel.find({
           email: email,
           "yearly_data.year": year_id,
-        });
+        }).populate("class_id", "room number");
 
         if (students.length === 0) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: `ไม่พบนักเรียนสำหรับปีการศึกษา ${year_id}` };
         }
-
+        const filteredStudents = students.map(student => {
+          const obj = student.toObject();
+          obj.yearly_data = obj.yearly_data
+          //เช็คว่าปีในฐานข้อมูลตรงกับปีที่ต้องการถึงจะส่งออก
+            .filter((data: IYearlyData) => data.year.toString() === year_id)
+          return obj;
+        });
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
 
         return {
           message: `ดึงนักเรียนสำหรับปีการศึกษา ${year_id} สำเร็จ`,
-          students,
+          students: filteredStudents,
         };
       } catch (error) {
         ctx.set.status = 500
@@ -157,11 +160,11 @@ const update_student_info = (app: Elysia) =>
   app.put(
     "/:id",
     async ({ params, body, set }) => {
-      const { first_name, last_name, prefix, user_id, class_id } = body;
+      const { first_name, last_name, prefix, user_id, class_id, phone } = body;
       try {
         const student = await StudentModel.findByIdAndUpdate(
           params.id,
-          { first_name, last_name, prefix, user_id, class_id },
+          { first_name, last_name, prefix, user_id, class_id, phone },
           { new: true }
         );
         if (!student) {
@@ -185,6 +188,7 @@ const update_student_info = (app: Elysia) =>
         prefix: t.String(),
         user_id: t.String(),
         class_id: t.String(),
+        phone: t.String(),
       }),
       detail: {
         tags: ["Student"],
@@ -218,9 +222,11 @@ const update_yearly_data = (app: Elysia) =>
           yearly = {
             year: year_id,
             personal_info: body.personal_info ?? {},
-            relation_info: body.relation_info ?? {},
-            family_status_info: body.family_status_info ?? {},
-            behavior_and_risk: body.behavior_and_risk ?? {},
+            relationship_info: body.relationship_info ?? {},
+            family_info: body.family_info ?? {},
+            behavior_info: body.behavior_info ?? {},
+            risk_info: body.risk_info ?? {},
+            additional_info: body.additional_info ?? {},
           };
           student.yearly_data.push(yearly);
         } else {
@@ -243,9 +249,11 @@ const update_yearly_data = (app: Elysia) =>
         student_id: t.Optional(t.String()),
         year_id: t.Optional(t.String()),
         personal_info: t.Optional(t.Any()),
-        relation_info: t.Optional(t.Any()),
-        family_status_info: t.Optional(t.Any()),
-        behavior_and_risk: t.Optional(t.Any()),
+        relationship_info: t.Optional(t.Any()),
+        family_info: t.Optional(t.Any()),
+        behavior_info: t.Optional(t.Any()),
+        risk_info: t.Optional(t.Any()),
+        additional_info: t.Optional(t.Any()),
       }),
       detail: {
         tags: ["Student"],
