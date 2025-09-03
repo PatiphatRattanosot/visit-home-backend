@@ -36,11 +36,10 @@ const delete_user = async (app: Elysia) =>
           set.status = 404;
           return { message: "ไม่พบผู้ใช้" };
         }
+        const user_name = `${user.first_name} ${user.last_name}`;
         if (user.role.includes("Student") && user.class_id) {
           const res = await delete_student_from_class(user._id.toString(), user.class_id.toString());
-          
           if (res.t === true) {
-            const user_name = `${user.first_name} ${user.last_name}`;
             set.status = 200;
             return { message: `ลบผู้ใช้ ${user_name} สำเร็จ` };
           } else {
@@ -48,6 +47,8 @@ const delete_user = async (app: Elysia) =>
             return { message: res.message };
           }
         }
+        set.status = 200;
+        return { message: `ลบผู้ใช้ ${user_name} สำเร็จ` };
       } catch (error) {
         set.status = 500;
         return { message: `เซิฟเวอร์ผิดพลาดไม่สามารถลบผู้ใช้ได้` };
