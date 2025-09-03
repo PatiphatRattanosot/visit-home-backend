@@ -129,16 +129,8 @@ const get_student_by_year_id = (app: Elysia) =>
         const filteredStudents = students.map(student => {
           const obj = student.toObject();
           obj.yearly_data = obj.yearly_data
+          //เช็คว่าปีในฐานข้อมูลตรงกับปีที่ต้องการถึงจะส่งออก
             .filter((data: IYearlyData) => data.year.toString() === year_id)
-            .map((data: IYearlyData) => ({
-              year: data.year,
-              personal_info: data.personal_info,
-              relationship_info: data.relationship_info,
-              family_info: data.family_info,
-              behavior_info: data.behavior_info,
-              risk_info: data.risk_info,
-              additional_info: data.additional_info,
-            }));
           return obj;
         });
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
@@ -249,8 +241,6 @@ const update_yearly_data = (app: Elysia) =>
         return { message: "แก้ไขข้อมูลรายปีนักเรียนสำเร็จ", yearly };
       } catch (err) {
         set.status = 500;
-        console.log(err);
-        
         return {
           message:
             "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลรายปีนักเรียนได้",
