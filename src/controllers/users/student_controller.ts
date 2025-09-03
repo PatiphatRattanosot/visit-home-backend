@@ -7,7 +7,7 @@ const create = (app: Elysia) =>
   app.post(
     "/create",
     async ({ body, set }) => {
-      const { first_name, last_name, prefix, user_id, class_id, phone } = body;
+      const { first_name, last_name, prefix, user_id, class_id } = body;
       try {
         // ตรวจสอบว่ามี user_id หรือไม่
         if (!user_id) {
@@ -16,7 +16,7 @@ const create = (app: Elysia) =>
         }
         const email = `${user_id}bp@bangpaeschool.ac.th`;
         // ตรวจสอบว่ามีข้อมูลที่จำเป็นหรือไม่
-        if (!first_name || !last_name || !prefix || !class_id || !phone) {
+        if (!first_name || !last_name || !prefix || !class_id ) {
           set.status = 400;
           return { message: "กรุณากรอกข้อมูลให้ครบถ้วน" };
         }
@@ -35,7 +35,6 @@ const create = (app: Elysia) =>
           email,
           role: ["Student"],
           class_id,
-          phone,
         });
         await student.save();
 
@@ -46,7 +45,6 @@ const create = (app: Elysia) =>
             return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", student };
           }
         }
-
       } catch (err) {
         set.status = 500;
         return {
@@ -61,7 +59,6 @@ const create = (app: Elysia) =>
         prefix: t.String(),
         user_id: t.String(),
         class_id: t.String(),
-        phone: t.String(),
       }),
       detail: {
         tags: ["Student"],
