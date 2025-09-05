@@ -1,4 +1,4 @@
-import { Elysia,t } from "elysia";
+import { Elysia, t } from "elysia";
 import { html, Html } from "@elysiajs/html";
 import swagger from "./swagger/index";
 import { jwt } from "@elysiajs/jwt";
@@ -14,6 +14,8 @@ import class_route from "./routes/class.route";
 import year_route from "./routes/year.route";
 import user_route from "./routes/user.route";
 import sdq_route from "./routes/sdq.route";
+import visit_info from "./routes/visit-info.route";
+
 const app = new Elysia()
   //middleware
   // HTML
@@ -33,7 +35,7 @@ const app = new Elysia()
   .use(auth_route)
   .group("", (app) =>
     app
-      .onBeforeHandle(async ({ cookie: { auth }, set, jwt,path }) => {
+      .onBeforeHandle(async ({ cookie: { auth }, set, jwt, path }) => {
         try {
           if (path.startsWith("/swagger")) return;
           // ตรวจสอบว่า auth cookie มีอยู่หรือไม่
@@ -43,7 +45,7 @@ const app = new Elysia()
           }
           // ตรวจสอบ JWT token
           const user = await jwt.verify(auth.value);
-          
+
           if (!user) {
             set.status = 401;
             return { message: "Invalid token" };
@@ -53,8 +55,8 @@ const app = new Elysia()
           return { message: "Unauthorized" };
         }
       })
-      .state("user", { email: ""})
-  .derive(async ({ cookie: { auth }, jwt, store }) => {
+      .state("user", { email: "" })
+      .derive(async ({ cookie: { auth }, jwt, store }) => {
         if (!auth.value) return { email: "", role: "" };
         const user = await jwt.verify(auth.value);
         if (!user || typeof user !== "object") return { email: "", role: "" };
@@ -70,11 +72,12 @@ const app = new Elysia()
       .use(year_route)
       .use(user_route)
       .use(sdq_route)
+      .use(visit_info)
   )
-  .post("/upload", ({body, set }) => {
+  .post("/upload", ({ body, set }) => {
     try {
       console.log(body);
-      
+
       const file = body.file;
       if (!file) {
         set.status = 400;
@@ -84,16 +87,16 @@ const app = new Elysia()
       const filePath = `uploads/${file.name}`;
       console.log(`File uploaded: ${filePath}`);
       return { message: "อัพโหลดไฟล์สำเร็จ", filePath };
-      
+
     } catch (error) {
       console.error("Error uploading file:", error);
       set.status = 500;
       return { message: "เกิดข้อผิดพลาดในการอัพโหลดไฟล์" };
-      
+
     }
   }, {
     body: t.Object({
-      file:t.Optional(t.File())
+      file: t.Optional(t.File())
     }),
     detail: { tags: ["App"], description: "Upload file" }
   })

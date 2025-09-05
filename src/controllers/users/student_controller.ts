@@ -284,11 +284,9 @@ const update_student_profile = (app: Elysia) =>
           return { message: "กรุณาอัปโหลดไฟล์รูปภาพ" };
         }
 
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const fileName = `${file.name}_${Date.now()}`;
-        const { uploadImageToFirebase } = await import("../../utils/uploadImageToFirebase");
-        const imageUrl = await uploadImageToFirebase(buffer, fileName, file.type);
+       
+        const { uploadImage } = await import("../../utils/uploadImageToFirebase");
+        const imageUrl = await uploadImage(file);
         if (!imageUrl) {
           set.status = 500;
           return { message: "ไม่สามารถอัปโหลดรูปภาพได้" };
