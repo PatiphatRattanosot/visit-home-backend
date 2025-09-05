@@ -34,7 +34,6 @@ const create_visit_info = (app: Elysia) =>
           year_id
         });
         await visit_info.save();
-        console.log(visit_info);
 
         set.status = 201;
         return { message: "สร้างข้อมูลสำเร็จ", data: visit_info };
