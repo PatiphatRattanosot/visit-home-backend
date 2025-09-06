@@ -61,7 +61,7 @@ interface ISDQ extends Document {
 }
 
 const SDQCRITERIA = ["0", "1", "2"];
-const OTHER = ["0", "1", "2", "3"];
+
 
 const SDQSchema = new Schema<ISDQ>(
   {
@@ -112,19 +112,16 @@ const SDQSchema = new Schema<ISDQ>(
 
     other: {
       additional: { type: String,  },
-      overall_problem: { type: String, enum: OTHER, required: true },
-      problem_time: { type: String, enum: OTHER},
+      overall_problem: { type: String, enum: ["0", "1", "2", "3"], required: true },
+      problem_time: { type: String},
       is_uneasy_student: {
-        type: String,
-        enum: OTHER
+        type: String
       },
       is_annoy_student: {
-        type: String,
-        enum: OTHER
+        type: String
       },
       is_difficult_student: {
-        type: String,
-        enum: OTHER
+        type: String
       },
     },
   },
