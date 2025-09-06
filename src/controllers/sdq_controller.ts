@@ -1,12 +1,13 @@
 import { Elysia, t } from "elysia";
 import SDQModel, { ISDQ } from "../models/sdq_model";
+
 // create
 const create_sdq = (app: Elysia) =>
     app.post(
         "/",
         async ({ body, set }) => {
             try {
-                const { student_id, year_id, emotional, behavioral, hyperactivity, friendship, social } = body;
+                const { student_id, year_id, assessor, emotional, behavioral, hyperactivity, friendship, social } = body;
                 // ตรวจสอบว่ามี student_id หรือไม่
                 if (!student_id) {
                     set.status = 400;
@@ -18,7 +19,7 @@ const create_sdq = (app: Elysia) =>
                     return { message: "กรุณากรอกข้อมูลปีการศึกษา" };
                 }
                 // ตรวจสอบว่ามีข้อมูล SDQ ของนักเรียนในปีการศึกษานี้อยู่แล้วหรือไม่
-                const existing_sdq = await SDQModel.findOne({ student_id, year_id });
+                const existing_sdq = await SDQModel.findOne({ student_id, year_id, assessor });
                 if (existing_sdq) {
                     set.status = 400;
                     return { message: "มีข้อมูล SDQ ของนักเรียนในปีการศึกษานี้แล้ว" };
@@ -57,6 +58,8 @@ const create_sdq = (app: Elysia) =>
                 set.status = 201;
                 return { message: "เพิ่มข้อมูล SDQ สำเร็จ", sdq };
             } catch (error) {
+                console.log(error);
+                
                 set.status = 500;
                 return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูล SDQ ได้" }
             }
@@ -103,9 +106,9 @@ const create_sdq = (app: Elysia) =>
             other: t.Object({
                 additional: t.Optional(t.String()),
                 overall_problem: t.String(),
-                problem_time:  t.Optional(t.String()),
-                is_uneasy_student:  t.Optional(t.String()),
-                is_annoy_student:  t.Optional(t.String()),
+                problem_time: t.Optional(t.String()),
+                is_uneasy_student: t.Optional(t.String()),
+                is_annoy_student: t.Optional(t.String()),
                 is_difficult_student: t.Optional(t.String()),
             })
         }),

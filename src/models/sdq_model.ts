@@ -2,8 +2,8 @@ import { Schema, model, Document } from "mongoose";
 
 interface ISDQ extends Document {
   status: boolean;
-  student_id: Schema.Types.ObjectId;
-  year_id: Schema.Types.ObjectId;
+  student_id: Schema.Types.ObjectId | string;
+  year_id: Schema.Types.ObjectId | string;
   assessor: string;
   emotional: {
     // Group 1: ด้านอารมณ์ Emotional
@@ -60,7 +60,7 @@ interface ISDQ extends Document {
   }
 }
 
-const SDQCRITERIA = ["0", "1", "2"];
+const SDQCRITERIA = [0, 1, 2];
 
 
 const SDQSchema = new Schema<ISDQ>(
