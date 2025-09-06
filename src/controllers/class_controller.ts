@@ -141,19 +141,20 @@ const get_class_by_id = async (app: Elysia) =>
   );
 
 const get_class_by_teacher_id = async (app: Elysia) =>
-  app.get(
-    "/by_teacher/:teacher_id",
-    async ({ params, set }) => {
+  app.post(
+    "/by_teacher/",
+    async ({ body, set }) => {
       try {
-        const { teacher_id } = params;
+        const { teacher_id, year_id } = body;
         // ตรวจสอบว่ามี teacher_id หรือไม่
-        if (!teacher_id) {
+        if (!teacher_id && !year_id) {
           set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
-          return { message: "ต้องการ ID ของครูเพื่อดึงชั้นปี" };
+          return { message: "ต้องการ ID ของครูและปีการศึกษาเพื่อดึงชั้นปี" };
         }
         // ดึงชั้นปีตาม teacher_id
-        const classes = await ClassModel.find({ teacher_id }, { year_id: 0 })
-          .populate("students", "user_id prefix first_name last_name");
+        const classes = await ClassModel.find({ teacher_id, year_id })
+          .populate("students", "user_id prefix first_name last_name")
+          .populate("year_id", "year");
         if (classes.length === 0) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: `ไม่พบชั้นปีสำหรับครู ID ${teacher_id}` };
@@ -172,8 +173,9 @@ const get_class_by_teacher_id = async (app: Elysia) =>
       }
     },
     {
-      params: t.Object({
+      body: t.Object({
         teacher_id: t.String(),
+        year_id: t.String()
       }),
       detail: {
         tags: ["Class"],
