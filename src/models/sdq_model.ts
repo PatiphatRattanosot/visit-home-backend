@@ -7,47 +7,47 @@ interface ISDQ extends Document {
   assessor: string;
   emotional: {
     // Group 1: ด้านอารมณ์ Emotional
-    question_3: string;
-    question_8: string;
-    question_13: string;
-    question_16: string;
-    question_24: string;
+    question_3: number;
+    question_8: number;
+    question_13: number;
+    question_16: number;
+    question_24: number;
     total_score: number;
   },
   behavioral: {
     // Group 2: ด้านพฤติกรรม Behavioral
-    question_5: string;
-    question_7: string;
-    question_12: string;
-    question_18: string;
-    question_22: string;
+    question_5: number;
+    question_7: number;
+    question_12: number;
+    question_18: number;
+    question_22: number;
     total_score: number;
   },
   hyperactivity: {
     // Group 3: ด้านสมาธิสั้น Hyperactivity
-    question_2: string;
-    question_10: string;
-    question_15: string;
-    question_21: string;
-    question_25: string;
+    question_2: number;
+    question_10: number;
+    question_15: number;
+    question_21: number;
+    question_25: number;
     total_score: number;
   },
   friendship: {
     // Group 4: ด้านความสัมพันธ์กับเพื่อน Friendship
-    question_6: string;
-    question_11: string;
-    question_14: string;
-    question_19: string;
-    question_23: string;
+    question_6: number;
+    question_11: number;
+    question_14: number;
+    question_19: number;
+    question_23: number;
     total_score: number;
   },
   social: {
     // Group 5: ด้านความสัมพันธ์กับสังคม Social
-    question_1: string;
-    question_4: string;
-    question_9: string;
-    question_17: string;
-    question_20: string;
+    question_1: number;
+    question_4: number;
+    question_9: number;
+    question_17: number;
+    question_20: number;
     total_score: number;
   }
   other: {
@@ -75,7 +75,7 @@ const SDQSchema = new Schema<ISDQ>(
       question_13: { type: String, enum: SDQCRITERIA, required: true },
       question_16: { type: String, enum: SDQCRITERIA, required: true },
       question_24: { type: String, enum: SDQCRITERIA, required: true },
-      total_score: { type: Number, default: 0 },
+      total_score: { type: Number, required: true },
     },
     behavioral: {
       question_5: { type: String, enum: SDQCRITERIA, required: true },
@@ -83,7 +83,7 @@ const SDQSchema = new Schema<ISDQ>(
       question_12: { type: String, enum: SDQCRITERIA, required: true },
       question_18: { type: String, enum: SDQCRITERIA, required: true },
       question_22: { type: String, enum: SDQCRITERIA, required: true },
-      total_score: { type: Number, default: 0 },
+      total_score: { type: Number, required: true  },
     },
     hyperactivity: {
       question_2: { type: String, enum: SDQCRITERIA, required: true },
@@ -91,7 +91,7 @@ const SDQSchema = new Schema<ISDQ>(
       question_15: { type: String, enum: SDQCRITERIA, required: true },
       question_21: { type: String, enum: SDQCRITERIA, required: true },
       question_25: { type: String, enum: SDQCRITERIA, required: true },
-      total_score: { type: Number, default: 0 },
+      total_score: { type: Number, required: true  },
     },
     friendship: {
       question_6: { type: String, enum: SDQCRITERIA, required: true },
@@ -99,7 +99,7 @@ const SDQSchema = new Schema<ISDQ>(
       question_14: { type: String, enum: SDQCRITERIA, required: true },
       question_19: { type: String, enum: SDQCRITERIA, required: true },
       question_23: { type: String, enum: SDQCRITERIA, required: true },
-      total_score: { type: Number, default: 0 },
+      total_score: { type: Number, required: true  },
     },
     social: {
       question_1: { type: String, enum: SDQCRITERIA, required: true },
@@ -107,27 +107,24 @@ const SDQSchema = new Schema<ISDQ>(
       question_9: { type: String, enum: SDQCRITERIA, required: true },
       question_17: { type: String, enum: SDQCRITERIA, required: true },
       question_20: { type: String, enum: SDQCRITERIA, required: true },
-      total_score: { type: Number, default: 0 },
+      total_score: { type: Number, required: true  },
     },
 
     other: {
-      additional: { type: String, required: true },
+      additional: { type: String,  },
       overall_problem: { type: String, enum: OTHER, required: true },
-      problem_time: { type: String, enum: OTHER, required: true },
+      problem_time: { type: String, enum: OTHER},
       is_uneasy_student: {
         type: String,
-        enum: OTHER,
-        required: true
+        enum: OTHER
       },
       is_annoy_student: {
         type: String,
-        enum: OTHER,
-        required: true
+        enum: OTHER
       },
       is_difficult_student: {
         type: String,
-        enum: OTHER,
-        required: true
+        enum: OTHER
       },
     },
   },

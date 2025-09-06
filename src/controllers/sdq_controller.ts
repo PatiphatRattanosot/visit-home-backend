@@ -101,12 +101,12 @@ const create_sdq = (app: Elysia) =>
                 question_20: t.String(),
             }),
             other: t.Object({
-                additional: t.String(),
+                additional: t.Optional(t.String()),
                 overall_problem: t.String(),
-                problem_time: t.String(),
-                is_uneasy_student: t.String(),
-                is_annoy_student: t.String(),
-                is_difficult_student: t.String(),
+                problem_time:  t.Optional(t.String()),
+                is_uneasy_student:  t.Optional(t.String()),
+                is_annoy_student:  t.Optional(t.String()),
+                is_difficult_student: t.Optional(t.String()),
             })
         }),
         detail: {
