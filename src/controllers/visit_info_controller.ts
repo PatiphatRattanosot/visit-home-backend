@@ -144,9 +144,9 @@ const update_visit_info = (app: Elysia) =>
     {
       body: t.Object({
         visit_info_id: t.String(),
-        home_img: t.File(),
+        home_img: t.Optional(t.File()),
         home_description: t.String(),
-        family_img: t.File(),
+        family_img: t.Optional(t.File())s,
         family_description: t.String(),
         comment: t.String(),
       }),
