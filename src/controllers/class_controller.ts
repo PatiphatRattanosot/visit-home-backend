@@ -1,3 +1,4 @@
+
 import { Elysia, t } from "elysia";
 import ClassModel, { IClass } from "../models/class_model";
 import { auto_create_student } from "./users/student_controller";
@@ -351,7 +352,6 @@ export const auto_update_classes_by_year = async (old_year: string, new_year: st
 }
 
 const auto_create_class = async (class_data: IClass, new_year: string) => {
-  console.log(class_data._id);
   if (!class_data._id) {
     return { message: "ไม่มี class id", status: 400, type: false }
   }
@@ -371,15 +371,18 @@ const auto_create_class = async (class_data: IClass, new_year: string) => {
     return;
   }
   const res = await auto_create_student(class_data._id.toString(), new_year) as any;
+  
+  
   if (res?.type === true) {
-    const { students } = res
+    const { new_students } = res
     const new_class = new ClassModel({
       room: (class_data.room + 1),
       number: class_data.number,
       year_id: new_year,
       teacher_id: class_data.teacher_id,
-      students: students
+      students: new_students
     });
+    
     await new_class.save();
     return
   }
