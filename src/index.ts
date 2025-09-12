@@ -29,77 +29,56 @@ const app = new Elysia()
   )
   // JWT
   .use(jwt({ secret: process.env.JWT_SECRET }))
+
   // Swagger
   .use(swagger)
   // Controllers
-  .use(auth_route)
-  .group("", (app) =>
+  .group("/api", (app) =>
     app
-      .onBeforeHandle(async ({ cookie: { auth }, set, jwt, path }) => {
-        try {
-          if (path.startsWith("/swagger")) return;
-          // ตรวจสอบว่า auth cookie มีอยู่หรือไม่
-          if (!auth.value) {
-            set.status = 400;
-            return { message: "No token provided" };
-          }
-          // ตรวจสอบ JWT token
-          const user = await jwt.verify(auth.value);
 
-          if (!user) {
-            set.status = 401;
-            return { message: "Invalid token" };
-          }
-        } catch (error) {
-          set.status = 401;
-          return { message: "Unauthorized" };
-        }
-      })
-      .state("user", { email: "" })
-      .derive(async ({ cookie: { auth }, jwt, store }) => {
-        if (!auth.value) return { email: "", role: "" };
-        const user = await jwt.verify(auth.value);
-        if (!user || typeof user !== "object") return { email: "", role: "" };
+      .use(auth_route)
+      .group("", (app) =>
+        app
+          .onBeforeHandle(async ({ cookie: { auth }, set, jwt, path }) => {
+            try {
+              if (path.startsWith("/swagger")) return;
+              // ตรวจสอบว่า auth cookie มีอยู่หรือไม่
+              if (!auth.value) {
+                set.status = 400;
+                return { message: "No token provided" };
+              }
+              // ตรวจสอบ JWT token
+              const user = await jwt.verify(auth.value);
 
-        store.user = { email: user.email ? user.email.toString() : "" };
+              if (!user) {
+                set.status = 401;
+                return { message: "Invalid token" };
+              }
+            } catch (error) {
+              set.status = 401;
+              return { message: "Unauthorized" };
+            }
+          })
+          .state("user", { email: "" })
+          .derive(async ({ cookie: { auth }, jwt, store }) => {
+            if (!auth.value) return { email: "", role: "" };
+            const user = await jwt.verify(auth.value);
+            if (!user || typeof user !== "object") return { email: "", role: "" };
 
-        return {
-          email: user.email ?? "",
-          role: user.role ?? "",
-        };
-      })
-      .use(class_route)
-      .use(year_route)
-      .use(user_route)
-      .use(sdq_route)
-      .use(visit_info)
+            store.user = { email: user.email ? user.email.toString() : "" };
+
+            return {
+              email: user.email ?? "",
+              role: user.role ?? "",
+            };
+          })
+          .use(class_route)
+          .use(year_route)
+          .use(user_route)
+          .use(sdq_route)
+          .use(visit_info)
+      )
   )
-  .post("/upload", ({ body, set }) => {
-    try {
-      console.log(body);
-
-      const file = body.file;
-      if (!file) {
-        set.status = 400;
-        return { message: "No file uploaded" };
-      }
-      // บันทึกไฟล์ที่อัพโหลด
-      const filePath = `uploads/${file.name}`;
-      console.log(`File uploaded: ${filePath}`);
-      return { message: "อัพโหลดไฟล์สำเร็จ", filePath };
-
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      set.status = 500;
-      return { message: "เกิดข้อผิดพลาดในการอัพโหลดไฟล์" };
-
-    }
-  }, {
-    body: t.Object({
-      file: t.Optional(t.File())
-    }),
-    detail: { tags: ["App"], description: "Upload file" }
-  })
   // Home Page
   .get(
     "/",
@@ -116,7 +95,7 @@ const app = new Elysia()
             </h1>
             <p class="text-lg text-gray-700">
               ไปที่ 
-              <a href='/swagger' class="text-blue-500 underline hover:text-blue-700">
+              <a href='/api/swagger' class="text-blue-500 underline hover:text-blue-700">
                 เอกสาร API
               </a> 
               เพื่อดูรายละเอียด API ทั้งหมดที่มีในระบบ

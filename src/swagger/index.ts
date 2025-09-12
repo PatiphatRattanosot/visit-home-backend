@@ -4,6 +4,7 @@ import swagger from "@elysiajs/swagger";
 export default (app:Elysia) => 
     app.use(
         swagger({
+          path: "/api/swagger",
           documentation: {
             info: {
               title: "เอกสาร API ระบบเยี่ยมบ้าน",
