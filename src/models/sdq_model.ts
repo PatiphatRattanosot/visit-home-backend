@@ -1,7 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
 interface ISDQ extends Document {
-  status: boolean;
+  isEstimate: boolean;
   student_id: Schema.Types.ObjectId | string;
   year_id: Schema.Types.ObjectId | string;
   assessor: string;
@@ -65,7 +65,7 @@ const SDQCRITERIA = [0, 1, 2];
 
 const SDQSchema = new Schema<ISDQ>(
   {
-    status: { type: Boolean, default: false },
+    isEstimate: { type: Boolean, default: false },
     student_id: { type: Schema.Types.ObjectId, ref: "Student", required: true },
     year_id: { type: Schema.Types.ObjectId, ref: "Year", required: true },
     assessor: { type: String, enum: ["Teacher", "Student", "Parent"] },

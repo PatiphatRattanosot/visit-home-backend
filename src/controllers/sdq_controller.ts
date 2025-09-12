@@ -53,7 +53,7 @@ const create_sdq = (app: Elysia) =>
                 sdq.friendship.total_score = Number(friendship_total);
                 sdq.social.total_score = Number(social_total);
 
-                sdq.status = true;
+                sdq.isEstimate = true;
                 await sdq.save();
                 set.status = 201;
                 return { message: "เพิ่มข้อมูล SDQ สำเร็จ", sdq };
