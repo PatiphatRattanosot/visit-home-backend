@@ -16,7 +16,7 @@ const create = (app: Elysia) =>
         }
         const email = `${user_id}bp@bangpaeschool.ac.th`;
         // ตรวจสอบว่ามีข้อมูลที่จำเป็นหรือไม่
-        if (!first_name || !last_name || !prefix || !class_id ) {
+        if (!first_name || !last_name || !prefix || !class_id) {
           set.status = 400;
           return { message: "กรุณากรอกข้อมูลให้ครบถ้วน" };
         }
@@ -126,7 +126,7 @@ const get_student_by_year_id = (app: Elysia) =>
         const filteredStudents = students.map(student => {
           const obj = student.toObject();
           obj.yearly_data = obj.yearly_data
-          //เช็คว่าปีในฐานข้อมูลตรงกับปีที่ต้องการถึงจะส่งออก
+            //เช็คว่าปีในฐานข้อมูลตรงกับปีที่ต้องการถึงจะส่งออก
             .filter((data: IYearlyData) => data.year.toString() === year_id)
           return obj;
         });
@@ -227,11 +227,14 @@ const update_yearly_data = (app: Elysia) =>
             behavior_info: body.behavior_info ?? {},
             risk_info: body.risk_info ?? {},
             additional_info: body.additional_info ?? {},
+            isCompleted: body.isCompleted ,
           };
           student.yearly_data.push(yearly);
         } else {
+          yearly.isCompleted = body.isCompleted  ;
           Object.assign(yearly, body);
         }
+
 
         await student.save();
         set.status = 200;
@@ -248,6 +251,7 @@ const update_yearly_data = (app: Elysia) =>
       body: t.Object({
         student_id: t.Optional(t.String()),
         year_id: t.Optional(t.String()),
+        isCompleted: t.String({ enum: ["Completed", "Incomplete", "Edit"] }),
         personal_info: t.Optional(t.Any()),
         relationship_info: t.Optional(t.Any()),
         family_info: t.Optional(t.Any()),
@@ -284,7 +288,7 @@ const update_student_profile = (app: Elysia) =>
           return { message: "กรุณาอัปโหลดไฟล์รูปภาพ" };
         }
 
-       
+
         const { uploadImage } = await import("../../utils/uploadImageToFirebase");
         const imageUrl = await uploadImage(file);
         if (!imageUrl) {

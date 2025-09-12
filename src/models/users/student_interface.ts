@@ -87,6 +87,7 @@ interface IAdditionalInfo {
 
 interface IYearlyData {
   year: ObjectId | string;
+  isCompleted: string;
   personal_info: IPersonalInfo;
   relationship_info: IRelationshipInfo;
   family_info: IFamilyInfo;
