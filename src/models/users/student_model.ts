@@ -108,7 +108,7 @@ const AdditionalInfoSchema = new Schema(
 const YearlyDataSchema = new Schema(
   {
     year: { type: Schema.Types.ObjectId, ref: "Year", required: true },
-    isCompleted: { type: String, enum: ["Edit", "Incomplete", "Completed"], default: "incomplete" },
+    isCompleted: { type: String, enum: ["Edit", "Incomplete", "Completed"], default: "Incomplete" },
     personal_info: PersonalInfoSchema,
     relationship_info: RelationshipInfoSchema,
     family_info: FamilyInfoSchema,

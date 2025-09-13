@@ -67,6 +67,68 @@ const create = (app: Elysia) =>
       },
     }
   );
+// สร้างข้อมูลนักเรียนใหม่หลายคนพร้อมกัน (ใช้ในกรณีอัปโหลด CSV)
+const create_many = (app: Elysia) =>
+  app.post(
+    "/create_many",
+    async ({ body, set }) => {
+      try {
+        let existing_students: string[] = []
+        let unable_to_create: string[] = []
+        let added_students: string[] = []
+        await Promise.all(body.map(async (student) => {
+          const { first_name, last_name, prefix, user_id, class_id } = student;
+          const existing_student = await StudentModel.findOne({ user_id });
+          if (existing_student) {
+            existing_students.push(`${prefix}${first_name} ${last_name}`);
+            return;
+          }
+
+          const email = `${user_id}bp@bangpaeschool.ac.th`;
+          const new_student = new StudentModel({
+            first_name,
+            last_name,
+            prefix,
+            user_id,
+            email,
+            role: ["Student"],
+            class_id,
+          });
+          if (!new_student || !new_student._id) {
+            unable_to_create.push(`${prefix}${first_name} ${last_name}`);
+            return;
+          }
+          await new_student.save();
+          add_student_to_class(class_id, new_student._id.toString());
+          added_students.push(`${prefix}${first_name} ${last_name}`);
+        }))
+        if (existing_students.length > 0) {
+          set.status = 400;
+          return { message: "มีข้อมูลนักเรียนบางคนในระบบแล้ว", data: { existing_students, added_students } };
+        }
+        if (unable_to_create.length > 0) {
+          set.status = 500;
+          return { message: "เกิดข้อผิดพลาดบางอย่างไม่สามารถเพิ่มข้อมูลนักเรียนได้", data: { unable_to_create, added_students } };
+        }
+        set.status = 201;
+        return { message: "เพิ่มข้อมูลนักเรียนทั้งหมดสำเร็จ", data: added_students };
+      } catch (error) {
+        set.status = 500;
+        return {
+          message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลนักเรียนได้",
+        };
+      }
+    }, {
+    body: t.Array(t.Object({
+      first_name: t.String(),
+      last_name: t.String(),
+      prefix: t.String(),
+      user_id: t.String(),
+      class_id: t.String(),
+    }))
+  });
+
+
 
 const get_all = (app: Elysia) =>
   app.get(
@@ -228,11 +290,11 @@ const update_yearly_data = (app: Elysia) =>
             behavior_info: body.behavior_info ?? {},
             risk_info: body.risk_info ?? {},
             additional_info: body.additional_info ?? {},
-            isCompleted: body.isCompleted ,
+            isCompleted: body.isCompleted,
           };
           student.yearly_data.push(yearly);
         } else {
-          yearly.isCompleted = body.isCompleted  ;
+          yearly.isCompleted = body.isCompleted;
           Object.assign(yearly, body);
         }
 
@@ -316,7 +378,7 @@ const update_student_profile = (app: Elysia) =>
 
 export const auto_create_student = async (class_id: string, new_year: string) => {
   const old_students = await StudentModel.find({ class_id: class_id });
-  
+
   if (old_students.length <= 0) {
     return { type: false }
   }
@@ -324,7 +386,7 @@ export const auto_create_student = async (class_id: string, new_year: string) =>
   await Promise.all(
     old_students.map(async (old_student) => {
       const res = await auto_update_for_student(old_student, new_year) as any;
-      
+
       if (res?.type === true) new_students.push({ _id: res.student_id })
     })
   );
@@ -337,16 +399,16 @@ const auto_update_for_student = async (old_student: IStudent, new_year: string) 
     if (existing_student) {
       return { type: false }
     }
-    
+
     const old_personal_info = old_student.yearly_data.find((y) => y.year.toString() === old_student.yearly_data[old_student.yearly_data.length - 1].year.toString())?.personal_info || {}
-    
+
     const new_yearly_data = {
       year: new_year,
       personal_info: old_personal_info
     } as IYearlyData
     const update_student = await StudentModel.findByIdAndUpdate({ _id: old_student._id })
     update_student?.yearly_data.push(new_yearly_data)
-    
+
     await update_student?.save()
     return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", status: 201, type: true, student_id: update_student?._id }
   } catch (error) {
@@ -357,6 +419,7 @@ const auto_update_for_student = async (old_student: IStudent, new_year: string) 
 
 const StudentController = {
   create,
+  create_many,
   get_all,
   get_by_id,
   get_student_by_year_id,

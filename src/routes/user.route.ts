@@ -27,6 +27,7 @@ export default (app:Elysia) =>
           
               .use(studentController.get_all)
               .use(studentController.create)
+              .use(studentController.create_many)
               .use(studentController.get_by_id)
               .use(studentController.get_student_by_year_id)
               .use(studentController.update_student_info)
