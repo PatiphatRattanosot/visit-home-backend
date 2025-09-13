@@ -2,6 +2,7 @@
 import { Elysia, t } from "elysia";
 import ClassModel, { IClass } from "../models/class_model";
 import { auto_create_student } from "./users/student_controller";
+import { IStudent } from "../models/users/student_interface";
 const create_class = async (app: Elysia) =>
   app.post(
     "/",
@@ -154,17 +155,35 @@ const get_class_by_teacher_id = async (app: Elysia) =>
         }
         // ดึงชั้นปีตาม teacher_id
         const classes = await ClassModel.find({ teacher_id, year_id })
-          .populate("students", "user_id prefix first_name last_name")
+          .populate("students", "user_id prefix first_name last_name yearly_data")
           .populate("year_id", "year");
         if (classes.length === 0) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: `ไม่พบชั้นปีสำหรับครู ID ${teacher_id}` };
         }
 
+        const filteredClasses = classes.map(classItem => {
+          // แปลงเป็น plain object
+          const obj: any = classItem.toObject();
+          const students:IStudent[] = obj.students
+           students.map((student) => {
+            // filter yearly_data เฉพาะ year_id ที่ต้องการ
+            const filteredYearly = student.yearly_data?.find(
+              (y) => y.year?.toString() === year_id
+            );
+            obj.students = students
+            return {
+              ...student,
+              isCompleted: filteredYearly?.isCompleted ?? null, // เพิ่ม isCompleted เฉพาะปีที่ค้นหา
+            };
+          });
+          return obj;
+        });
+
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
         return {
           message: `ดึงชั้นปีสำหรับครู ID ${teacher_id} สำเร็จ`,
-          classes,
+          classes: filteredClasses,
         };
       } catch (error) {
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
@@ -371,8 +390,8 @@ const auto_create_class = async (class_data: IClass, new_year: string) => {
     return;
   }
   const res = await auto_create_student(class_data._id.toString(), new_year) as any;
-  
-  
+
+
   if (res?.type === true) {
     const { new_students } = res
     const new_class = new ClassModel({
@@ -382,7 +401,7 @@ const auto_create_class = async (class_data: IClass, new_year: string) => {
       teacher_id: class_data.teacher_id,
       students: new_students
     });
-    
+
     await new_class.save();
     return
   }
