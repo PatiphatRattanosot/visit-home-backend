@@ -151,7 +151,7 @@ const get_by_id = (app: Elysia) =>
       const student = await StudentModel.findById(params.id);
       if (!student) {
         set.status = 404;
-        return { error: "Student not found" };
+        return { message: "ไม่พบนักเรียน" };
       }
       return { message: "ดึงข้อมูลนักเรียนสำเร็จ", student };
     },
