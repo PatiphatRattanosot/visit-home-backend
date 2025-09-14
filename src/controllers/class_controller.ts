@@ -325,8 +325,11 @@ export const add_student_to_class = async (class_id: string, student_id: string)
     if (class_data.students && class_data.students.includes(student_id as any)) return true
     class_data.students = class_data.students ? [...class_data.students, student_id as any] : [student_id as any]
     await class_data.save()
+    console.log(`เพิ่มนักเรียนที่มี ID ${student_id} เข้าไปในชั้นปีที่มี ID ${class_id} สำเร็จ`);
+    
     return true
   } catch (error) {
+    console.error(error)
     return false
   }
 }

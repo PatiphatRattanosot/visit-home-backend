@@ -72,16 +72,18 @@ const create_many = (app: Elysia) =>
   app.post(
     "/create_many",
     async ({ body, set }) => {
+      console.log(body.length);
+
       try {
         let existing_students: string[] = []
         let unable_to_create: string[] = []
         let added_students: string[] = []
-        await Promise.all(body.map(async (student) => {
+        for (const student of body) {
           const { first_name, last_name, prefix, user_id, class_id } = student;
           const existing_student = await StudentModel.findOne({ user_id });
           if (existing_student) {
             existing_students.push(`${prefix}${first_name} ${last_name}`);
-            return;
+            continue;
           }
 
           const email = `${user_id}bp@bangpaeschool.ac.th`;
@@ -96,21 +98,29 @@ const create_many = (app: Elysia) =>
           });
           if (!new_student || !new_student._id) {
             unable_to_create.push(`${prefix}${first_name} ${last_name}`);
-            return;
+            continue;
           }
+          console.log(`สร้างข้อมูลนักเรียน ${prefix}${first_name} ${last_name} สำเร็จ`);
+
           await new_student.save();
-          add_student_to_class(class_id, new_student._id.toString());
+          await add_student_to_class(class_id, new_student._id.toString());
           added_students.push(`${prefix}${first_name} ${last_name}`);
-        }))
+        }
         if (existing_students.length > 0) {
-          set.status = 400;
+          console.log(existing_students.length);
+
+          set.status = 200;
           return { message: "มีข้อมูลนักเรียนบางคนในระบบแล้ว", data: { existing_students, added_students } };
         }
         if (unable_to_create.length > 0) {
+          console.log(unable_to_create.length);
+
           set.status = 500;
           return { message: "เกิดข้อผิดพลาดบางอย่างไม่สามารถเพิ่มข้อมูลนักเรียนได้", data: { unable_to_create, added_students } };
         }
         set.status = 201;
+        console.log(added_students.length);
+
         return { message: "เพิ่มข้อมูลนักเรียนทั้งหมดสำเร็จ", data: added_students };
       } catch (error) {
         set.status = 500;
