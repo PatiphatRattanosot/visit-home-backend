@@ -3,7 +3,7 @@ import { html, Html } from "@elysiajs/html";
 import swagger from "./swagger/index";
 import { jwt } from "@elysiajs/jwt";
 import { cors } from "@elysiajs/cors";
-
+import { logger } from "@tqman/nice-logger";
 // Connect Database
 import "./database/db_setup";
 
@@ -29,7 +29,11 @@ const app = new Elysia()
   )
   // JWT
   .use(jwt({ secret: process.env.JWT_SECRET }))
-
+  // Logger
+  .use(logger({
+    mode: "live", // "live" or "combined" (default: "combined")
+    withTimestamp: true, // optional (default: false)
+  }))
   // Swagger
   .use(swagger)
   // Controllers
