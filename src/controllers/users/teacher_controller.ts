@@ -64,6 +64,17 @@ const create_teacher = async (app: Elysia) =>
     }
   );
 
+  export const add_class_to_teacher = async (teacher_id: string, new_class_id: string) =>{
+    try {
+      const teacher = await TeacherModel.findById(teacher_id) as ITeacher
+      teacher.class_id = new_class_id;
+      await teacher.save()
+      return { status: 200 }
+    } catch (error) {
+      return { status: 500 };
+    }
+  }
+
 // ฟังก์ชัน getTeacher ใช้สำหรับสร้าง endpoint "/" เพื่อดึงข้อมูลครูที่ปรึกษา
 const get_teacher = async (app: Elysia) =>
   app.get(

@@ -3,6 +3,8 @@ import { Elysia, t } from "elysia";
 import ClassModel, { IClass } from "../models/class_model";
 import { auto_create_student } from "./users/student_controller";
 import { IStudent } from "../models/users/student_interface";
+import { add_class_to_teacher } from "./users/teacher_controller";
+
 const create_class = async (app: Elysia) =>
   app.post(
     "/",
@@ -37,7 +39,18 @@ const create_class = async (app: Elysia) =>
           year_id,
           teacher_id,
         });
+        if(!new_class || !new_class._id) {
+          set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
+          return { message: "เซิฟเวอร์เกิดข้อผิดพลาดสร้างชั้นปีไม่สำเร็จ" };
+        }
         await new_class.save();
+        const res = await add_class_to_teacher(teacher_id, new_class._id.toString());
+
+        if (!res || res.status === 500 || res.status === 404) {
+          set.status = 500;
+          return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถเพิ่มข้อมูลชั้นปีให้กับครูได้" };
+        }
+
         set.status = 201; // ตั้งค่า HTTP status เป็น 201 (Created)
         return { message: `สร้างชั้นปี ${room} ห้องที่ ${number} สำเร็จ` };
       } catch (error) {
