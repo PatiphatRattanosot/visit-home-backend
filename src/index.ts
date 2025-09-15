@@ -28,7 +28,7 @@ const app = new Elysia()
     })
   )
   // JWT
-  .use(jwt({ secret: process.env.JWT_SECRET }))
+  .use(jwt({ secret: process.env.JWT_SECRET,exp: '1d' }))
   // Logger
   .use(logger({
     mode: "live", // "live" or "combined" (default: "combined")

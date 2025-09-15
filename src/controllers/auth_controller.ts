@@ -20,7 +20,7 @@ const sign = async (app: Elysia) =>
                 // หาก token มีอยู่แล้วและ email ไม่ตรงกับ token ที่มีอยู่
                 auth.remove(); // ลบ cookie auth เดิม
                 set.status = 403
-                return { message:`การเข้าสู่ระบบทับซ้อน กรุณาเข้าสู่ระบบใหม่อีกครั้ง` }; 
+                return { message: `การเข้าสู่ระบบทับซ้อน กรุณาเข้าสู่ระบบใหม่อีกครั้ง` };
               }
             }
           }
@@ -31,7 +31,7 @@ const sign = async (app: Elysia) =>
             return { message: "ต้องการอีเมล" };
           }
 
-          const user = await UserModel.findOne({ email: email }).select('-yearly_data -image_url'); 
+          const user = await UserModel.findOne({ email: email }).select('-yearly_data -image_url');
 
           // หากไม่พบผู้ใช้
           if (!user) {
@@ -47,7 +47,7 @@ const sign = async (app: Elysia) =>
             value: token, // ใส่ token ที่สร้างขึ้น
             httpOnly: true, // ป้องกันการเข้าถึง cookie จาก JavaScript ฝั่ง client
             secure: process.env.NODE_ENV === "production", // ใช้ secure cookie ใน production
-            maxAge: 24 * 60 * 60 * 1000, // อายุของ cookie (1 วัน)
+            maxAge: 24 * 60 * 60  , // อายุของ cookie (1 วัน)
             path: "/", // ใช้ cookie ได้ทุก path
           });
 
