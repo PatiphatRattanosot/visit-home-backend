@@ -51,16 +51,13 @@ jobs:
             # เอา image ไปที่ server
             docker pull ghcr.io/patiphatrattanosot/visit-home-backend:latest
             
-            # ทดสอบ echo ค่าตัวแปร environment
-            echo "DB_URL=`${{secrets.DB_URL}}`"
-            echo "DB_URL=${{secrets.DB_URL}}"
             # สั่งให้รัน container ใหม่ และ map environment 
             docker run --restart=always -d --pull always \
             -e JWT_SECRET=${{secrets.JWT_SECRET}} \
             -e NODE_ENV=${{secrets.NODE_ENV}} \
             -e PORT=${{secrets.PORT}} \
             -e FRONTEND_URL=${{secrets.FRONTEND_URL}} \
-            -e DB_URL=${{secrets.DB_URL}} \
+            -e DB_URL="mongodb+srv://${{secrets.DB_USER}}:${{secrets.DB_PASSWORD}}@visithome.261oh.mongodb.net/visit_home?retryWrites=true&w=majority&appName=visithome" \
             -e FIREBASE_API_KEY=${{secrets.FIREBASE_API_KEY}} \
             -e FIREBASE_AUTH_DOMAIN=${{secrets.FIREBASE_AUTH_DOMAIN}} \
             -e FIREBASE_PROJECT_ID=${{secrets.FIREBASE_PROJECT_ID}} \
