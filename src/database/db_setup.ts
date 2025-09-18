@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 // Connect to the MongoDB database
 const mongodb_url =
   process.env.DB_URL || "mongodb://localhost:27017/dev-visit-home";
+console.log("Connecting to database: " + process.env.DB_URL);
 
 mongoose
   .connect(mongodb_url)
