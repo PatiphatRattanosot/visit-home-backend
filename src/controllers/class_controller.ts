@@ -39,7 +39,7 @@ const create_class = async (app: Elysia) =>
           year_id,
           teacher_id,
         });
-        if(!new_class || !new_class._id) {
+        if (!new_class || !new_class._id) {
           set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
           return { message: "เซิฟเวอร์เกิดข้อผิดพลาดสร้างชั้นปีไม่สำเร็จ" };
         }
@@ -176,20 +176,21 @@ const get_class_by_teacher_id = async (app: Elysia) =>
         }
 
         const filteredClasses = classes.map(classItem => {
-          // แปลงเป็น plain object
           const obj: any = classItem.toObject();
-          const students:IStudent[] = obj.students
-           students.map((student) => {
-            // filter yearly_data เฉพาะ year_id ที่ต้องการ
-            const filteredYearly = student.yearly_data?.find(
-              (y) => y.year?.toString() === year_id
-            );
-            obj.students = students
-            return {
-              ...student,
-              isCompleted: filteredYearly?.isCompleted ?? null, // เพิ่ม isCompleted เฉพาะปีที่ค้นหา
-            };
-          });
+          if (obj.students && obj.students.length > 0) {
+            obj.students = obj.students.map((student: IStudent) => {
+              // filter yearly_data เฉพาะ year_id ที่ต้องการ
+              const filteredYearly = student.yearly_data?.find((yearly) => yearly.year?.toString() === year_id);
+              return {
+                _id: student._id,
+                first_name: student.first_name,
+                last_name: student.last_name,
+                prefix: student.prefix,
+                user_id: student.user_id,
+                isCompleted: filteredYearly?.isCompleted ?? null,
+              };
+            });
+          }
           return obj;
         });
 
@@ -199,6 +200,8 @@ const get_class_by_teacher_id = async (app: Elysia) =>
           classes: filteredClasses,
         };
       } catch (error) {
+        console.log(error);
+
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
         return {
           message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถดึงชั้นปีได้",
@@ -339,7 +342,7 @@ export const add_student_to_class = async (class_id: string, student_id: string)
     class_data.students = class_data.students ? [...class_data.students, student_id as any] : [student_id as any]
     await class_data.save()
     console.log(`เพิ่มนักเรียนที่มี ID ${student_id} เข้าไปในชั้นปีที่มี ID ${class_id} สำเร็จ`);
-    
+
     return true
   } catch (error) {
     console.error(error)
