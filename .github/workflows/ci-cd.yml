@@ -38,7 +38,7 @@ jobs:
 
       - name: Deploy via SSH with Password
         run: |
-          sshpass -p '${{ secrets.SSH_PASSWORD }}' ssh -o StrictHostKeyChecking=no root@206.189.92.255 << 'EOF'
+          sshpass -p '${{ secrets.SSH_DIGITALOCEAN }}' ssh -o StrictHostKeyChecking=no root@206.189.92.255 << 'EOF'
             docker logout ghcr.io
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u patiphatrattanosot --password-stdin
 
