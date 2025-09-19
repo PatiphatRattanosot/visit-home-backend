@@ -15,7 +15,7 @@ import year_route from "./routes/year.route";
 import user_route from "./routes/user.route";
 import sdq_route from "./routes/sdq.route";
 import visit_info from "./routes/visit-info.route";
-
+import scheduleRoute from "./routes/schedule.route";
 const app = new Elysia()
   //middleware
   // HTML
@@ -39,7 +39,6 @@ const app = new Elysia()
   // Controllers
   .group("/api", (app) =>
     app
-
       .use(auth_route)
       .group("", (app) =>
         app
@@ -81,6 +80,7 @@ const app = new Elysia()
           .use(user_route)
           .use(sdq_route)
           .use(visit_info)
+          .use(scheduleRoute)
       )
   )
   // Home Page
