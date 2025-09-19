@@ -17,7 +17,7 @@ export default (app:Elysia) =>
                 description: "Development server",
               },
               {
-                url: "https://api.example.com",
+                url: "http://206.189.92.255:3000",
                 description: "Production server",
               },
             ],
@@ -49,7 +49,11 @@ export default (app:Elysia) =>
               {
                 name: "SDQ",
                 description: "API สำหรับการจัดการข้อมูล SDQ",
-              }
+              },
+              {
+                name: "Visit-Info",
+                description: "API สำหรับการจัดการข้อมูลการเยี่ยมบ้าน",
+              },
             ],
           },
         })

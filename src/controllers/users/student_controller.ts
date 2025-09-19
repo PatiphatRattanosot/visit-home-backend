@@ -135,7 +135,11 @@ const create_many = (app: Elysia) =>
       prefix: t.String(),
       user_id: t.String(),
       class_id: t.String(),
-    }))
+    })),
+    detail: {
+      tags: ["Student"],
+      description: "สร้างข้อมูลนักเรียนหลายคนพร้อมกัน",
+    },
   });
 
 

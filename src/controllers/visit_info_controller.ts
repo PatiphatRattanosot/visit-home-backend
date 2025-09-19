@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import VisitInfoModel from "../models/visit_info_model";
 import { uploadImage } from "../utils/uploadImageToFirebase";
+
 const create_visit_info = (app: Elysia) =>
   app.post(
     "/create",
@@ -55,7 +56,7 @@ const create_visit_info = (app: Elysia) =>
         teacher_id: t.String(),
         year_id: t.String(),
       }),
-      detail: { tags: ["VisitInfo"], description: "สร้างข้อมูลเยี่ยมบ้าน" },
+      detail: { tags: ["Visit-Info"], description: "สร้างข้อมูลเยี่ยมบ้าน" },
     }
   );
 
@@ -73,7 +74,7 @@ const get_visit_info_by_id = (app: Elysia) =>
     },
     {
       params: t.Object({ id: t.String() }),
-      detail: { tags: ["VisitInfo"], description: "ดึงข้อมูลเยี่ยมบ้านตาม id" },
+      detail: { tags: ["Visit-Info"], description: "ดึงข้อมูลเยี่ยมบ้านตาม id" },
     }
   );
 const get_visit_info_student_by_year_id = (app: Elysia) =>
@@ -100,7 +101,7 @@ const get_visit_info_student_by_year_id = (app: Elysia) =>
     },
     {
       body: t.Object({ student_id: t.String(), year_id: t.String() }),
-      detail: { tags: ["VisitInfo"], description: "ดึงข้อมูลเยี่ยมบ้านตาม student_id" },
+      detail: { tags: ["Visit-Info"], description: "ดึงข้อมูลเยี่ยมบ้านตาม student_id" },
     }
   );
 
@@ -150,7 +151,7 @@ const update_visit_info = (app: Elysia) =>
         family_description: t.String(),
         comment: t.String(),
       }),
-      detail: { tags: ["VisitInfo"], description: "แก้ไขข้อมูลเยี่ยมบ้าน" },
+      detail: { tags: ["Visit-Info"], description: "แก้ไขข้อมูลเยี่ยมบ้าน" },
     }
   );
 
@@ -168,7 +169,7 @@ const delete_visit_info = (app: Elysia) =>
     },
     {
       body: t.Object({ _id: t.String() }),
-      detail: { tags: ["VisitInfo"], description: "ลบข้อมูลเยี่ยมบ้าน" },
+      detail: { tags: ["Visit-Info"], description: "ลบข้อมูลเยี่ยมบ้าน" },
     }
   );
 
