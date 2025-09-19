@@ -62,21 +62,21 @@ const auto_create_year = async (app: Elysia) =>
 
         if (old_year._id && new_year._id) {
           const res = await auto_update_classes_by_year(old_year._id.toString(), new_year._id.toString());
-          
+
           if (res.type === true) {
             set.status = 201; // ตั้งค่า HTTP status เป็น 201 (Created)
             return { message: `สร้างปีการศึกษา ${new_year.year} สำเร็จ` };
           }
         }
-         await YearModel.findByIdAndDelete(new_year._id);
+        await YearModel.findByIdAndDelete(new_year._id);
         // console.log(delete_year);
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
-        
+
         return { message: `สร้างปีการศึกษา ${new_year.year} ไม่สำเร็จ` };
 
       } catch (error) {
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
-        
+
         return {
           message:
             "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถเพิ่มปีการศึกษาอัตโนมัติได้",
@@ -244,12 +244,52 @@ const delete_year = async (app: Elysia) =>
     }
   );
 
+const update_appointment_time = async (app: Elysia) =>
+  app.patch(
+    "/add-schedule",
+    async ({ body, set }) => {
+      try {
+        const { year_id, start_schedule_date, end_schedule_date } = body;
+        if (!year_id) {
+          set.status = 400;
+          return { message: "ต้องการ year_id" };
+        }
+        if (!start_schedule_date || !end_schedule_date) {
+          set.status = 400;
+          return { message: "กรุณากรอกวันที่ให้ครบถ้วน" };
+        }
+        const year = (await YearModel.findByIdAndUpdate({
+          _id: year_id
+        }, { start_schedule_date, end_schedule_date }, { new: true }))
+        if (!year) {
+          set.status = 404;
+          return { message: "ไม่พบปีการศึกษานี้ในระบบ" };
+        }
+        set.status = 200;
+        return { message: "กำหนดช่วงเวลานัดหมาย สำเร็จ", year };
+      } catch (error) {
+        set.status = 500;
+        return {
+          message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลได้",
+        };
+      }
+    }, {
+    body: t.Object({
+      year_id: t.String(),
+      start_schedule_date: t.Date(),
+      end_schedule_date: t.Date(),
+    }),
+    detail: { tags: ["Year"], description: "เพิ่ม/แก้ไข ช่วงเวลานัดหมาย" },
+  })
+
+
 const YearController = {
   create_year,
   auto_create_year,
   get_years,
   get_year_by_id,
   update_year,
+  update_appointment_time,
   delete_year,
 };
 
