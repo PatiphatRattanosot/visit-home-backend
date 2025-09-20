@@ -23,12 +23,15 @@ const app = new Elysia()
   // CORS
   .use(
     cors({
-      origin: process.env.FRONTEND_URL || "http://localhost:5173",
+      origin: [
+        process.env.FRONTEND_URL || "http://localhost:5173",
+        "http://206.189.92.255",
+      ],
       credentials: true,
     })
   )
   // JWT
-  .use(jwt({ secret: process.env.JWT_SECRET,exp: '1d' }))
+  .use(jwt({ secret: process.env.JWT_SECRET, exp: '1d' }))
   // Logger
   .use(logger({
     mode: "live", // "live" or "combined" (default: "combined")
