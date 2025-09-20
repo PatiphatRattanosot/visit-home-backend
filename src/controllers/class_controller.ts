@@ -188,6 +188,8 @@ const get_class_by_teacher_id = async (app: Elysia) =>
                 prefix: student.prefix,
                 user_id: student.user_id,
                 isCompleted: filteredYearly?.isCompleted ?? null,
+                long: filteredYearly?.personal_info?.lng ?? null,
+                lat: filteredYearly?.personal_info?.lat ?? null,
               };
             });
           }
