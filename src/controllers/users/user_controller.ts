@@ -12,8 +12,8 @@ const get_users = async (app: Elysia) =>
         console.log(users);
         
         if (!users) {
-          set.status = 404;
-          return { message: "ไม่พบข้อมูลผู้ใช้", users: [] };
+          set.status = 204;
+          return { message: "ไม่พบข้อมูลผู้ใช้ในระบบ"};
         }
         set.status = 200;
         return { message: "ดึงข้อมูลผู้ใช้สำเร็จ", users };
@@ -29,8 +29,8 @@ const get_users = async (app: Elysia) =>
           message: t.String({ examples: ["ดึงข้อมูลผู้ใช้สำเร็จ"] }),
           users: t.Array(t.Any()),
         }),
-        404: t.Object({
-          message: t.String({ examples: ["ไม่พบข้อมูลผู้ใช้"] }),
+        204: t.Object({
+          message: t.String({ examples: ["ไม่พบข้อมูลผู้ใช้ในระบบ"] }),
         }),
         500: t.Object({
           message: t.String({ examples: ["เซิฟเวอร์ผิดพลาดในการดึงข้อมูลผู้ใช้"] }),
