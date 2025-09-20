@@ -178,21 +178,21 @@ const get_by_id = (app: Elysia) =>
     }
   );
 const get_student_by_year_id = (app: Elysia) =>
-  app.get(
+  app.post(
     "/by_year/:year_id",
-    async (ctx: { set: any; params: any; store: any }) => {
+    async ({body:{student_id,year_id}, set}) => {
       try {
-        const { params, set, store } = ctx;
-        const email = store.user.email;
-
-        const { year_id } = params;
         if (!year_id) {
           set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
           return { message: "ต้องการปีการศึกษาเพื่อดึงนักเรียน" };
         }
+        if (!student_id) {
+          set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request) 
+          return { message: "กรุณากรอกข้อมูลไอดีนักเรียน" };
+        }
         // ดึงนักเรียนตาม year_id
         const students = await StudentModel.find({
-          email: email,
+          _id: student_id,
           "yearly_data.year": year_id,
         }).populate("class_id", "room number");
 
@@ -214,20 +214,22 @@ const get_student_by_year_id = (app: Elysia) =>
           students: filteredStudents,
         };
       } catch (error) {
-        ctx.set.status = 500
+        set.status = 500
         return {
           message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถดึงนักเรียนได้",
         };
       }
     },
     {
-      params: t.Object({
+      body: t.Object({
+        student_id: t.String(),
         year_id: t.String(),
       }),
       detail: {
         tags: ["Student"],
         description: "ดึงนักเรียนตามปีการศึกษา",
       },
+    
     }
   );
 
