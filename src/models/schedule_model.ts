@@ -14,7 +14,7 @@ const ScheduleSchema = new Schema({
     year_id: { type: Schema.Types.ObjectId, ref: "Year", required: true },
     teacher_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
     appointment_date: { type: Date, required: true },
-    status: { type: String, enum: ["Not-scheduled", "Been-set.", "Going", "Canceled"], default: "Not-scheduled" },
+    status: { type: String, enum: ["Not-scheduled", "Been-set", "Canceled"], default: "Not-scheduled" },
     comment: { type: String },
 },{ timestamps: true });
 

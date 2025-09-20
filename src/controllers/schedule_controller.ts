@@ -22,12 +22,18 @@ const create_schedule = (app: Elysia) =>
                 set.status = 400;
                 return { message: "กรุณาระบุวันที่นัดหมายและสถานะ" };
             }
+            // ตรวจสอบว่ามีข้อมูลนี้อยู่แล้วหรือไม่
+            const existingSchedule = await ScheduleModel.findOne({ teacher_id, student_id, year_id });
+            if (existingSchedule) {
+                set.status = 400;
+                return { message: "มีข้อมูลตารางนี้อยู่แล้ว" };
+            }
             const schedule = new ScheduleModel({
                 teacher_id,
                 student_id,
                 year_id,
                 appointment_date,
-                status,
+                status:"Been-set",
             });
             if (comment) {
                 schedule.comment = comment;
@@ -49,7 +55,6 @@ const create_schedule = (app: Elysia) =>
             student_id: t.String(),
             year_id: t.String(),
             appointment_date: t.Date(),
-            status: t.String(),
             comment: t.Optional(t.String()),
         }),
         detail: { tags: ["Schedule"], description: "สร้างข้อมูลตาราง" }

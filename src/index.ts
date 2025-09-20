@@ -25,7 +25,7 @@ const app = new Elysia()
     cors({
       origin: [
         process.env.FRONTEND_URL || "http://localhost:5173",
-        "http://localhost:4173",
+        "http://localhost",
       ],
       credentials: true,
     })
