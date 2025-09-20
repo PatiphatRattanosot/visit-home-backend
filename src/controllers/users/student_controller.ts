@@ -398,24 +398,21 @@ export const auto_create_student = async (class_id: string, new_year: string) =>
   if (old_students.length <= 0) {
     return { type: false }
   }
-  let new_students: any[] = []
-  await Promise.all(
-    old_students.map(async (old_student) => {
-      const res = await auto_update_for_student(old_student, new_year) as any;
-
-      if (res?.type === true) new_students.push({ _id: res.student_id })
-    })
-  );
-  return { type: true, new_students }
+  let new_students: any[] = [];
+  for (const old_student of old_students) {
+    const res = await auto_update_for_student(old_student, new_year) as any;
+    if (res?.type === true) new_students.push({ _id: res.student_id });
+  }
+  return { type: true, new_students };
 }
 
 const auto_update_for_student = async (old_student: IStudent, new_year: string) => {
   try {
-    const existing_student = await StudentModel.findOne({ user_id: old_student.user_id, "yearly_data.year": new_year });
-    if (existing_student) {
+    const existing_student_by_year = await StudentModel.findOne({ user_id: old_student.user_id, "yearly_data.year": new_year });
+    if (existing_student_by_year) {
       return { type: false }
     }
-
+// คัดลอกข้อมูล personal_info จากปีล่าสุด
     const old_personal_info = old_student.yearly_data.find((y) => y.year.toString() === old_student.yearly_data[old_student.yearly_data.length - 1].year.toString())?.personal_info || {}
 
     const new_yearly_data = {

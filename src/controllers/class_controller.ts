@@ -380,8 +380,11 @@ export const auto_update_classes_by_year = async (old_year: string, new_year: st
     if (old_classes.length === 0) {
       return { message: `ไม่พบชั้นปีสำหรับปีการศึกษา ${old_year}`, status: 404, type: false }
     }
+    
     for (const old_class of old_classes) {
-      await auto_create_class(old_class, new_year);
+      if (old_class.number === 1, old_class.room === 2,  old_class.room === 4, old_class.room === 5) {
+        await auto_create_class(old_class, new_year); 
+      }
     }
 
     return { message: `อัพเดตชั้นปีจากปีการศึกษา ${old_year} ไปยัง ${new_year} สำเร็จ`, status: 200, type: true }
@@ -392,27 +395,9 @@ export const auto_update_classes_by_year = async (old_year: string, new_year: st
 }
 
 const auto_create_class = async (class_data: IClass, new_year: string) => {
-  if (!class_data._id) {
-    return { message: "ไม่มี class id", status: 400, type: false }
-  }
-
-
-  if (class_data.room >= 6) {
-    const room = `GRAD_${new Date().getFullYear() + 543}`
-    const grad_class = new ClassModel({
-      status: false,
-      room: room,
-      number: class_data.number,
-      year_id: new_year,
-      teacher_id: "",
-      students: class_data.students
-    })
-    await grad_class.save();
-    return;
-  }
+  if (!class_data._id)  return 
+  
   const res = await auto_create_student(class_data._id.toString(), new_year) as any;
-
-
   if (res?.type === true) {
     const { new_students } = res
     const new_class = new ClassModel({

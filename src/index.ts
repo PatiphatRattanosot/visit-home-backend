@@ -28,7 +28,7 @@ const app = new Elysia()
     })
   )
   // JWT
-  .use(jwt({ secret: process.env.JWT_SECRET,exp: '1d' }))
+  .use(jwt({ secret: process.env.JWT_SECRET, exp: '1d' }))
   // Logger
   .use(logger({
     mode: "live", // "live" or "combined" (default: "combined")
@@ -82,12 +82,11 @@ const app = new Elysia()
           .use(visit_info)
           .use(scheduleRoute)
       )
-  )
-  // Home Page
-  .get(
-    "/",
-    () =>
-      `<html>
+      // Home Page
+      .get(
+        "/",
+        () =>
+          `<html>
         <head>
           <title>Visit Home API</title>
           <script src="https://cdn.tailwindcss.com"></script>
@@ -107,10 +106,12 @@ const app = new Elysia()
           </div>
         </body>
       </html>`,
-    { detail: { tags: ["App"] } }
+        { detail: { tags: ["App"] } }
+      )
   )
+
   .listen(process.env.PORT || 3000);
 
 console.log(
-  `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
+  `🦊 Elysia is running at ${app.server?.url}api`
 );
