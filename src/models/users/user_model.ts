@@ -17,21 +17,21 @@ const UserSchema = new Schema(
   {
     timestamps: true,
     discriminatorKey: "type",
-    toObject: {
-      virtuals: true,
-      transform: (doc, ret) => {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      }
-    }
+    // toObject: {
+    //   virtuals: true,
+    //   transform: (doc, ret) => {
+    //     ret.id = ret._id.toString();
+    //     delete ret._id;
+    //     delete ret.__v;
+    //     return ret;
+    //   }
+    // }
   }
 );
 
-UserSchema.virtual('id').get(function () {
-  return this._id.toString();
-});
+// UserSchema.virtual('id').get(function () {
+//   return this._id.toString();
+// });
 
 const UserModel = model("User", UserSchema);
 export default UserModel;
