@@ -5,7 +5,7 @@ import ScheduleModel from "../models/schedule_model";
 const create_schedule = (app: Elysia) =>
     app.post("/create", async ({ body, set }) => {
         try {
-            const { teacher_id, student_id, year_id, appointment_date, status, comment } = body;
+            const { teacher_id, student_id, year_id, appointment_date, comment } = body;
             if (!teacher_id) {
                 set.status = 400;
                 return { message: "กรุณาระบุรหัสครูที่ปรึกษา" };
