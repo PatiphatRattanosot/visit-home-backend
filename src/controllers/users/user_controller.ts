@@ -9,11 +9,10 @@ const get_users = async (app: Elysia) =>
     async ({ set }) => {
       try {
         const users = await UserModel.find();
-        console.log(users);
-        
+
         if (!users) {
           set.status = 204;
-          return { message: "ไม่พบข้อมูลผู้ใช้ในระบบ"};
+          return { message: "ไม่พบข้อมูลผู้ใช้ในระบบ" };
         }
         set.status = 200;
         return { message: "ดึงข้อมูลผู้ใช้สำเร็จ", users };
