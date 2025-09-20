@@ -65,7 +65,7 @@ jobs:
             -e FIREBASE_MESSAGING_SENDER_ID=${{secrets.FIREBASE_MESSAGING_SENDER_ID}} \
             -e FIREBASE_APP_ID=${{secrets.FIREBASE_APP_ID}} \
             --name visit-home-backend \
-            -p 80:3000 \
+            -p 3000:3000 \
             --network visit-home-network \
             ghcr.io/patiphatrattanosot/visit-home-backend:latest
           EOF
