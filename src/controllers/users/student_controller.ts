@@ -179,7 +179,7 @@ const get_by_id = (app: Elysia) =>
   );
 const get_student_by_year_id = (app: Elysia) =>
   app.post(
-    "/by_year/:year_id",
+    "/by_year",
     async ({body:{student_id,year_id}, set}) => {
       try {
         if (!year_id) {
