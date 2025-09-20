@@ -6,11 +6,13 @@ import { delete_student_from_class } from "../../controllers/class_controller";
 const get_users = async (app: Elysia) =>
   app.get(
     "/",
-    async ({ set, cookie: { auth } }) => {
+    async ({ set }) => {
       try {
         const users = await UserModel.find();
+        console.log(users);
+        
         if (!users) {
-          set.status = 200;
+          set.status = 404;
           return { message: "ไม่พบข้อมูลผู้ใช้", users: [] };
         }
         set.status = 200;
@@ -22,6 +24,18 @@ const get_users = async (app: Elysia) =>
     },
     {
       detail: { tags: ["User"], description: "ดึงข้อมูลผู้ใช้" },
+      response: {
+        200: t.Object({
+          message: t.String({ examples: ["ดึงข้อมูลผู้ใช้สำเร็จ"] }),
+          users: t.Array(t.Any()),
+        }),
+        404: t.Object({
+          message: t.String({ examples: ["ไม่พบข้อมูลผู้ใช้"] }),
+        }),
+        500: t.Object({
+          message: t.String({ examples: ["เซิฟเวอร์ผิดพลาดในการดึงข้อมูลผู้ใช้"] }),
+        }),
+      }
     }
   );
 

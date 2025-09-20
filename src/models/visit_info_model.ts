@@ -22,6 +22,6 @@ const VisitInfoSchema: Schema = new Schema<IVisitInfo>({
   comment: { type: String, required: true },
 });
 
-const VisitInfoModel = mongoose.model<IVisitInfo>("VisitInfo", VisitInfoSchema);
+const VisitInfoModel = mongoose.model<IVisitInfo>("Visit-Info", VisitInfoSchema);
 
 export default VisitInfoModel;
