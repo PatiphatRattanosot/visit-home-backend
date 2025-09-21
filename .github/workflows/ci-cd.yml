@@ -1,10 +1,8 @@
 name: "build and deploy docker image"
 on:
   push:
-    # tags:
-    #   - "*" # Trigger เมื่อ push tag ใด ๆ
-    branches:
-      - test-prod
+    tags:
+      - "*" # Trigger เมื่อ push tag ใด ๆ
 
 jobs:
   release-docker-image-job:
