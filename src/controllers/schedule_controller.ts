@@ -18,7 +18,7 @@ const create_schedule = (app: Elysia) =>
                 set.status = 400;
                 return { message: "กรุณาระบุรหัสปีการศึกษา" };
             }
-            if (!appointment_date ) {
+            if (!appointment_date) {
                 set.status = 400;
                 return { message: "กรุณาระบุวันที่นัดหมายและสถานะ" };
             }
@@ -33,7 +33,7 @@ const create_schedule = (app: Elysia) =>
                 student_id,
                 year_id,
                 appointment_date,
-                status:"Been-set",
+                status: "Been-set",
             });
             if (comment) {
                 schedule.comment = comment;
@@ -64,11 +64,8 @@ const create_schedule = (app: Elysia) =>
 const get_by_tc_stu_year = (app: Elysia) =>
     app.post("/get_schedule", async ({ body, set }) => {
         try {
-            const { teacher_id, student_id, year_id } = body;
-            if (!teacher_id) {
-                set.status = 400;
-                return { message: "กรุณาระบุรหัสครูที่ปรึกษา" };
-            }
+            const { student_id, year_id } = body;
+
             if (!student_id) {
                 set.status = 400;
                 return { message: "กรุณาระบุรหัสนักเรียน" };
@@ -77,20 +74,41 @@ const get_by_tc_stu_year = (app: Elysia) =>
                 set.status = 400;
                 return { message: "กรุณาระบุรหัสปีการศึกษา" };
             }
-            const schedules = await ScheduleModel.find({ teacher_id, student_id, year_id });
+            const schedules = await ScheduleModel.findOne({ student_id, year_id })
+                .populate("teacher_id", "prefix first_name last_name phone")
+                .populate("student_id", "prefix first_name last_name phone") as any;
+                
             if (!schedules) {
                 set.status = 404;
                 return { message: "ไม่พบข้อมูลตาราง" };
             }
+            
+            const schedules_data = {
+                _id: schedules._id,
+                teacher: {
+                    _id: schedules.teacher_id._id,
+                    prefix: schedules.teacher_id.prefix,
+                    first_name: schedules.teacher_id.first_name,
+                    last_name: schedules.teacher_id.last_name,
+                    phone: schedules.teacher_id.phone,
+                },
+                student: {
+                    _id: schedules.student_id._id,
+                    prefix: schedules.student_id.prefix,
+                    first_name: schedules.student_id.first_name,
+                    last_name: schedules.student_id.last_name,
+                    phone: schedules.student_id.phone,
+                }
+            }
+
             set.status = 200;
-            return { message: "ดึงข้อมูลตารางสำเร็จ", schedules };
+            return { message: "ดึงข้อมูลตารางสำเร็จ", schedules: schedules_data };
         } catch (error) {
             set.status = 500;
             return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถดึงข้อมูลตารางได้" };
         }
     }, {
         body: t.Object({
-            teacher_id: t.Optional(t.String()),
             student_id: t.Optional(t.String()),
             year_id: t.Optional(t.String()),
         }),
@@ -101,16 +119,16 @@ const get_by_tc_stu_year = (app: Elysia) =>
 const update_schedule = (app: Elysia) =>
     app.put("/update", async ({ body, set }) => {
         try {
-            const { schedule_id, appointment_date, comment} = body;
+            const { schedule_id, appointment_date, comment } = body;
             if (!schedule_id) {
                 set.status = 400;
                 return { message: "กรุณาระบุรหัสตาราง" };
             }
-            if (!appointment_date ) {
+            if (!appointment_date) {
                 set.status = 400;
                 return { message: "กรุณาระบุวันที่นัดหมาย" };
             }
-            const schedule = await ScheduleModel.findByIdAndUpdate(schedule_id, { appointment_date, status:"Been-set" }, { new: true });
+            const schedule = await ScheduleModel.findByIdAndUpdate(schedule_id, { appointment_date, status: "Been-set" }, { new: true });
             if (!schedule) {
                 set.status = 404;
                 return { message: "ไม่พบข้อมูลตาราง" };
