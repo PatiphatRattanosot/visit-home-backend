@@ -4,11 +4,12 @@ import swagger from "./swagger/index";
 import { jwt } from "@elysiajs/jwt";
 import { cors } from "@elysiajs/cors";
 import { logger } from "@tqman/nice-logger";
+import { elysiaXSS } from 'elysia-xss' 
+
 // Connect Database
 import "./database/db_setup";
 
 // Import Controllers
-
 import auth_route from "./routes/auth.route";
 import class_route from "./routes/class.route";
 import year_route from "./routes/year.route";
@@ -16,6 +17,7 @@ import user_route from "./routes/user.route";
 import sdq_route from "./routes/sdq.route";
 import visit_info from "./routes/visit-info.route";
 import scheduleRoute from "./routes/schedule.route";
+
 const app = new Elysia()
   //middleware
   // HTML
@@ -37,6 +39,8 @@ const app = new Elysia()
     mode: "live", // "live" or "combined" (default: "combined")
     withTimestamp: true, // optional (default: false)
   }))
+  // XSS Protection 
+  .use(elysiaXSS({}))
   // Swagger
   .use(swagger)
   // Controllers
@@ -65,17 +69,28 @@ const app = new Elysia()
               return { message: "Unauthorized" };
             }
           })
-          .state("user", { email: "" })
+          .state("user", { email: "", roles: [] as string[] })
           .derive(async ({ cookie: { auth }, jwt, store }) => {
-            if (!auth.value) return { email: "", role: "" };
+            if (!auth.value) return { email: "", roles: [] };
             const user = await jwt.verify(auth.value);
-            if (!user || typeof user !== "object") return { email: "", role: "" };
+            // console.log(user);
+            
+            if (!user || typeof user !== "object") return { email: "", roles: [] };
 
-            store.user = { email: user.email ? user.email.toString() : "" };
+            // แยก role string เป็น array (รองรับทั้ง "Teacher,Admin" และ "Teacher")
+            const userRoles = user.role 
+              ? user.role.toString().split(',').map((r: string) => r.trim())
+              : [];
+            // console.log(userRoles);
+            
+            store.user = { 
+              email: user.email ? user.email.toString() : "", 
+              roles: userRoles 
+            };
 
             return {
               email: user.email ?? "",
-              role: user.role ?? "",
+              roles: userRoles,
             };
           })
           .use(class_route)
