@@ -18,7 +18,7 @@ const create_schedule = (app: Elysia) =>
                 set.status = 400;
                 return { message: "กรุณาระบุรหัสปีการศึกษา" };
             }
-            if (!appointment_date || !status) {
+            if (!appointment_date ) {
                 set.status = 400;
                 return { message: "กรุณาระบุวันที่นัดหมายและสถานะ" };
             }
@@ -129,9 +129,9 @@ const update_schedule = (app: Elysia) =>
 
 // ลบข้อมูล schedule
 const delete_schedule = (app: Elysia) =>
-    app.delete("/delete", async ({ body, set }) => {
+    app.delete("/delete/:schedule_id", async ({ params, set }) => {
         try {
-            const { schedule_id } = body;
+            const { schedule_id } = params;
             const result = await ScheduleModel.findByIdAndDelete(schedule_id);
             if (!result) {
                 set.status = 404;
@@ -144,7 +144,7 @@ const delete_schedule = (app: Elysia) =>
             return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถลบข้อมูลตารางได้" };
         }
     }, {
-        body: t.Object({ schedule_id: t.String() }),
+        params: t.Object({ schedule_id: t.String() }),
         detail: { tags: ["Schedule"], description: "ลบข้อมูลตาราง" }
     });
 
