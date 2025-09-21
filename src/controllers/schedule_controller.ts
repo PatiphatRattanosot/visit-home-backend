@@ -18,7 +18,7 @@ const create_schedule = (app: Elysia) =>
                 set.status = 400;
                 return { message: "กรุณาระบุรหัสปีการศึกษา" };
             }
-            if (!appointment_date || !status) {
+            if (!appointment_date ) {
                 set.status = 400;
                 return { message: "กรุณาระบุวันที่นัดหมายและสถานะ" };
             }
@@ -101,8 +101,16 @@ const get_by_tc_stu_year = (app: Elysia) =>
 const update_schedule = (app: Elysia) =>
     app.put("/update", async ({ body, set }) => {
         try {
-            const { schedule_id, appointment_date, status, comment} = body;
-            const schedule = await ScheduleModel.findByIdAndUpdate(schedule_id, { appointment_date, status }, { new: true });
+            const { schedule_id, appointment_date, comment} = body;
+            if (!schedule_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสตาราง" };
+            }
+            if (!appointment_date ) {
+                set.status = 400;
+                return { message: "กรุณาระบุวันที่นัดหมาย" };
+            }
+            const schedule = await ScheduleModel.findByIdAndUpdate(schedule_id, { appointment_date, status:"Been-set" }, { new: true });
             if (!schedule) {
                 set.status = 404;
                 return { message: "ไม่พบข้อมูลตาราง" };
@@ -121,7 +129,6 @@ const update_schedule = (app: Elysia) =>
         body: t.Object({
             schedule_id: t.String(),
             appointment_date: t.Date(),
-            status: t.String(),
             comment: t.Optional(t.String()),
         }),
         detail: { tags: ["Schedule"], description: "อัปเดตข้อมูลตาราง" }
@@ -129,9 +136,13 @@ const update_schedule = (app: Elysia) =>
 
 // ลบข้อมูล schedule
 const delete_schedule = (app: Elysia) =>
-    app.delete("/delete", async ({ body, set }) => {
+    app.delete("/delete/:schedule_id", async ({ params, set }) => {
         try {
-            const { schedule_id } = body;
+            const { schedule_id } = params;
+            if (!schedule_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสตาราง" };
+            }
             const result = await ScheduleModel.findByIdAndDelete(schedule_id);
             if (!result) {
                 set.status = 404;
@@ -144,7 +155,7 @@ const delete_schedule = (app: Elysia) =>
             return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถลบข้อมูลตารางได้" };
         }
     }, {
-        body: t.Object({ schedule_id: t.String() }),
+        params: t.Object({ schedule_id: t.String() }),
         detail: { tags: ["Schedule"], description: "ลบข้อมูลตาราง" }
     });
 
