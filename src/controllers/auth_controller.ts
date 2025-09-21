@@ -17,18 +17,19 @@ const sign = async (app: Elysia) =>
             set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
             return { message: "ต้องการอีเมล" };
           }
-
+          // ตรวจสอบและลบ cookie auth เดิมถ้า email ไม่ตรงกับ token ที่มีอยู่
           if (auth.value) {
-            const user_token = await jwt.verify(auth.value);
-            console.log(user_token);
+            const user_token = await jwt.verify(auth.value.toString());
             if (user_token && typeof user_token === "object") {
               if (email != user_token.email) {
-                // หาก token มีอยู่แล้วและ email ไม่ตรงกับ token ที่มีอยู่
                 auth.remove(); // ลบ cookie auth เดิม
               }
             }
           }
 
+
+
+          // ค้นหาผู้ใช้ในฐานข้อมูลตาม email ที่ได้รับมา
           const user = await UserModel.findOne({ email: email }).select('email role first_name last_name prefix user_id ');
 
           // หากไม่พบผู้ใช้
@@ -47,7 +48,7 @@ const sign = async (app: Elysia) =>
             maxAge: 24 * 60 * 60, // อายุของ cookie (1 วัน)
             path: "/", // ใช้ cookie ได้ทุก path
           });
-          
+
           set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
           return { message: "เข้าสู่ระบบสำเร็จ", token, user }; // ส่งข้อความแจ้งเตือนสำเร็จพร้อม token และข้อมูลผู้ใช้
         } catch (error) {
@@ -58,7 +59,7 @@ const sign = async (app: Elysia) =>
       },
       {
         body: t.Object({
-          email: t.String({ examples: ["bp12345@bangpaeschool.ac.th","123bp@bangpaeschool.ac.th","654259017@webmail.npru.ac.th"]}),
+          email: t.String({ examples: ["bp12345@bangpaeschool.ac.th", "123bp@bangpaeschool.ac.th", "654259017@webmail.npru.ac.th"] }),
         }),
         detail: {
           tags: ["Auth"],
