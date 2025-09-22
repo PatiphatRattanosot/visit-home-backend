@@ -10,16 +10,16 @@ Backend API for Visit Home Management System - A comprehensive platform for mana
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Technology Stack](#technology-stack)
-- [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [API Documentation](#api-documentation)
-- [Docker Deployment](#docker-deployment)
-- [Development](#development)
-- [Contributing](#contributing)
+- [Overview](#-overview)
+- [Features](#-features)
+- [Technology Stack](#-technology-stack)
+- [Project Structure](#-project-structure)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [API Documentation](#-api-documentation)
+- [Docker Deployment](#-docker-deployment)
+- [Development](#-development)
+- [Contributing](#-contributing)
 
 ## 🎯 Overview
 
