@@ -82,7 +82,6 @@ const get_by_tc_stu_year = (app: Elysia) =>
                 set.status = 404;
                 return { message: "ไม่พบข้อมูลตาราง" };
             }
-            console.log(schedules);
             
             const schedules_data = {
                 _id: schedules._id,
