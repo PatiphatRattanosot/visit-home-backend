@@ -30,6 +30,7 @@ const app = new Elysia()
         process.env.FRONTEND_URL || "http://localhost:5173",
         "https://project-visit-home.xyz",
         "https://project-visit-home.vercel.app",
+        "http://206.189.92.255:3000",
       ],
       credentials: true,
     })
