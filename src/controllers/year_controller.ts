@@ -1,5 +1,7 @@
 import { Elysia, t } from "elysia";
+import { ObjectId } from "mongodb"
 import YearModel, { IYear } from "../models/year_model";
+import { auto_update_classes_by_year } from "./class_controller";
 
 const create_year = async (app: Elysia) =>
   app.post(
@@ -46,16 +48,38 @@ const auto_create_year = async (app: Elysia) =>
     "/auto",
     async ({ set }) => {
       try {
-        const year = (await YearModel.findOne({})
+        const old_year = (await YearModel.findOne()
           .sort({ year: -1 })
-          .limit(1)) as IYear; // ค้นหาปีการศึกษาล่าสุดในฐานข้อมูล
+          .limit(1)); // ค้นหาปีการศึกษาล่าสุดในฐานข้อมูล
+        if (!old_year) {
+          set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
+          return { message: "ยังไม่มีปีการศึกษาในระบบ" };
+        }
 
-        const new_year = new YearModel({ year: Number(year.year) + 1 }); // สร้างปีการศึกษาใหม่ที่เป็นปีถัดไป
+        const new_year = new YearModel({ year: Number(old_year.year) + 1 }); // สร้างปีการศึกษาใหม่ที่เป็นปีถัดไป
+
         await new_year.save(); // บันทึกปีการศึกษาใหม่
-        set.status = 201; // ตั้งค่า HTTP status เป็น 201 (Created)
-        return { message: `สร้างปีการศึกษา ${new_year.year} สำเร็จ` };
+        // console.log(new_year);
+
+        if (old_year._id && new_year._id) {
+          const res = await auto_update_classes_by_year(old_year._id.toString(), new_year._id.toString());
+          
+
+          if (res.type === true) {
+            await YearModel.findByIdAndDelete(new_year._id);
+            set.status = 201; // ตั้งค่า HTTP status เป็น 201 (Created)
+            return { message: `สร้างปีการศึกษา ${new_year.year} สำเร็จ` };
+          }
+        }
+        
+        // console.log(delete_year);
+        set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
+
+        return { message: `สร้างปีการศึกษา ${new_year.year} ไม่สำเร็จ` };
+
       } catch (error) {
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
+
         return {
           message:
             "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถเพิ่มปีการศึกษาอัตโนมัติได้",
@@ -95,19 +119,20 @@ const get_years = async (app: Elysia) =>
   );
 
 // ฟังก์ชันสำหรับดึงข้อมูลปีการศึกษาโดยใช้ year_id
-const get_year_by_id = async (app: Elysia) =>
+const get_year_by_name= async (app: Elysia) =>
   app.get(
-    "/:year_id",
+    "/:year",
     async ({ params, set }) => {
       try {
-        const { year_id } = params; // ดึง year_id จากพารามิเตอร์
-        const year = await YearModel.findById(year_id); // ค้นหาปีการศึกษาตาม year_id
-        if (!year) {
+        const { year } = params; // ดึง year_id จากพารามิเตอร์
+        
+        const yearData = await YearModel.find({ year }); // ค้นหาปีการศึกษาตาม year_id
+        if (!yearData) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: "ไม่พบปีการศึกษานี้ในระบบ" };
         }
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
-        return year; // ส่งคืนปีการศึกษา
+        return yearData; // ส่งคืนปีการศึกษา
       } catch (error) {
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
         return {
@@ -116,6 +141,7 @@ const get_year_by_id = async (app: Elysia) =>
       }
     },
     {
+      params: t.Object({ year: t.Number() }),
       detail: {
         tags: ["Year"],
         description: "ดูปีการศึกษา",
@@ -203,7 +229,7 @@ const delete_year = async (app: Elysia) =>
         }
 
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
-        return { message: `ลบปีการศึกษา ${year_id} สำเร็จ` };
+        return { message: `ลบปีการศึกษา ${year.year} สำเร็จ` };
       } catch (error) {
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
         return {
@@ -222,12 +248,52 @@ const delete_year = async (app: Elysia) =>
     }
   );
 
+const update_appointment_time = async (app: Elysia) =>
+  app.patch(
+    "/add-schedule",
+    async ({ body, set }) => {
+      try {
+        const { year_id, start_schedule_date, end_schedule_date } = body;
+        if (!year_id) {
+          set.status = 400;
+          return { message: "ต้องการ year_id" };
+        }
+        if (!start_schedule_date || !end_schedule_date) {
+          set.status = 400;
+          return { message: "กรุณากรอกวันที่ให้ครบถ้วน" };
+        }
+        const year = (await YearModel.findByIdAndUpdate({
+          _id: year_id
+        }, { start_schedule_date, end_schedule_date }, { new: true }))
+        if (!year) {
+          set.status = 404;
+          return { message: "ไม่พบปีการศึกษานี้ในระบบ" };
+        }
+        set.status = 200;
+        return { message: "กำหนดช่วงเวลานัดหมาย สำเร็จ", year };
+      } catch (error) {
+        set.status = 500;
+        return {
+          message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลได้",
+        };
+      }
+    }, {
+    body: t.Object({
+      year_id: t.String(),
+      start_schedule_date: t.Date(),
+      end_schedule_date: t.Date(),
+    }),
+    detail: { tags: ["Year"], description: "เพิ่ม/แก้ไข ช่วงเวลานัดหมาย" },
+  })
+
+
 const YearController = {
   create_year,
   auto_create_year,
   get_years,
-    get_year_by_id,
+  get_year_by_name,
   update_year,
+  update_appointment_time,
   delete_year,
 };
 

@@ -11,10 +11,14 @@
     "@elysiajs/html": "^1.2.0",
     "@elysiajs/jwt": "^1.2.0",
     "@elysiajs/swagger": "^1.2.2",
+    "@tqman/nice-logger": "^1.1.1",
     "elysia": "latest",
+    "elysia-xss": "^1.0.3",
+    "firebase": "^12.1.0",
     "mongoose": "^8.13.2"
   },
   "devDependencies": {
+    "@types/firebase": "^3.2.3",
     "bun-types": "latest"
   },
   "module": "src/index.js"

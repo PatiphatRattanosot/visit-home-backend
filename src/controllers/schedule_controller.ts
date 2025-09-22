@@ -1,0 +1,191 @@
+import { Elysia, t } from "elysia";
+import ScheduleModel from "../models/schedule_model";
+
+// สร้างข้อมูล schedule
+const create_schedule = (app: Elysia) =>
+    app.post("/create", async ({ body, set }) => {
+        try {
+            const { teacher_id, student_id, year_id, appointment_date, comment } = body;
+            if (!teacher_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสครูที่ปรึกษา" };
+            }
+            if (!student_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสนักเรียน" };
+            }
+            if (!year_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสปีการศึกษา" };
+            }
+            if (!appointment_date) {
+                set.status = 400;
+                return { message: "กรุณาระบุวันที่นัดหมายและสถานะ" };
+            }
+            // ตรวจสอบว่ามีข้อมูลนี้อยู่แล้วหรือไม่
+            const existingSchedule = await ScheduleModel.findOne({ teacher_id, student_id, year_id });
+            if (existingSchedule) {
+                set.status = 400;
+                return { message: "มีข้อมูลตารางนี้อยู่แล้ว" };
+            }
+            const schedule = new ScheduleModel({
+                teacher_id,
+                student_id,
+                year_id,
+                appointment_date,
+                status: "Been-set",
+            });
+            if (comment) {
+                schedule.comment = comment;
+            }
+            if (!schedule) {
+                set.status = 404;
+                return { message: "ไม่สามารถสร้างข้อมูลตารางได้" };
+            }
+            await schedule.save();
+            set.status = 201;
+            return { message: "สร้างข้อมูลตารางสำเร็จ", schedule };
+        } catch (error) {
+            set.status = 500;
+            return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถสร้างข้อมูลตารางได้" };
+        }
+    }, {
+        body: t.Object({
+            teacher_id: t.String(),
+            student_id: t.String(),
+            year_id: t.String(),
+            appointment_date: t.Date(),
+            comment: t.Optional(t.String()),
+        }),
+        detail: { tags: ["Schedule"], description: "สร้างข้อมูลตาราง" }
+    });
+
+// ดึงข้อมูล schedule ตาม teacher_id, student_id, year_id
+const get_by_tc_stu_year = (app: Elysia) =>
+    app.post("/get_schedule", async ({ body, set }) => {
+        try {
+            const { student_id, year_id } = body;
+
+            if (!student_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสนักเรียน" };
+            }
+            if (!year_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสปีการศึกษา" };
+            }
+            const schedules = await ScheduleModel.findOne({ student_id, year_id })
+                .populate("teacher_id", "prefix first_name last_name phone")
+                .populate("student_id", "prefix first_name last_name phone") as any;
+                
+            if (!schedules) {
+                set.status = 404;
+                return { message: "ไม่พบข้อมูลตาราง" };
+            }
+            
+            const schedules_data = {
+                _id: schedules._id,
+                appointment_date: schedules.appointment_date,
+                comment: schedules.comment,
+                status: schedules.status,
+                teacher: {
+                    _id: schedules.teacher_id._id,
+                    prefix: schedules.teacher_id.prefix,
+                    first_name: schedules.teacher_id.first_name,
+                    last_name: schedules.teacher_id.last_name,
+                    phone: schedules.teacher_id.phone,
+                },
+                student: {
+                    _id: schedules.student_id._id,
+                    prefix: schedules.student_id.prefix,
+                    first_name: schedules.student_id.first_name,
+                    last_name: schedules.student_id.last_name,
+                    phone: schedules.student_id.phone,
+                }
+            }
+
+            set.status = 200;
+            return { message: "ดึงข้อมูลตารางสำเร็จ", schedules: schedules_data };
+        } catch (error) {
+            set.status = 500;
+            return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถดึงข้อมูลตารางได้" };
+        }
+    }, {
+        body: t.Object({
+            student_id: t.Optional(t.String()),
+            year_id: t.Optional(t.String()),
+        }),
+        detail: { tags: ["Schedule"], description: "ดึงข้อมูลตารางตาม teacher, student, year" }
+    });
+
+// อัปเดตข้อมูล schedule
+const update_schedule = (app: Elysia) =>
+    app.put("/update", async ({ body, set }) => {
+        try {
+            const { schedule_id, appointment_date, comment } = body;
+            if (!schedule_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสตาราง" };
+            }
+            if (!appointment_date) {
+                set.status = 400;
+                return { message: "กรุณาระบุวันที่นัดหมาย" };
+            }
+            const schedule = await ScheduleModel.findByIdAndUpdate(schedule_id, { appointment_date, status: "Been-set" }, { new: true });
+            if (!schedule) {
+                set.status = 404;
+                return { message: "ไม่พบข้อมูลตาราง" };
+            }
+            if (comment) {
+                schedule.comment = comment;
+            }
+            await schedule.save();
+            set.status = 200;
+            return { message: "อัปเดตข้อมูลตารางสำเร็จ", schedule };
+        } catch (error) {
+            set.status = 500;
+            return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถอัปเดตข้อมูลตารางได้" };
+        }
+    }, {
+        body: t.Object({
+            schedule_id: t.String(),
+            appointment_date: t.Date(),
+            comment: t.Optional(t.String()),
+        }),
+        detail: { tags: ["Schedule"], description: "อัปเดตข้อมูลตาราง" }
+    });
+
+// ลบข้อมูล schedule
+const delete_schedule = (app: Elysia) =>
+    app.delete("/delete/:schedule_id", async ({ params, set }) => {
+        try {
+            const { schedule_id } = params;
+            if (!schedule_id) {
+                set.status = 400;
+                return { message: "กรุณาระบุรหัสตาราง" };
+            }
+            const result = await ScheduleModel.findByIdAndDelete(schedule_id);
+            if (!result) {
+                set.status = 404;
+                return { message: "ไม่พบข้อมูลตาราง" };
+            }
+            set.status = 200;
+            return { message: "ลบข้อมูลตารางสำเร็จ" };
+        } catch (error) {
+            set.status = 500;
+            return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถลบข้อมูลตารางได้" };
+        }
+    }, {
+        params: t.Object({ schedule_id: t.String() }),
+        detail: { tags: ["Schedule"], description: "ลบข้อมูลตาราง" }
+    });
+
+const ScheduleController = {
+    create_schedule,
+    get_by_tc_stu_year,
+    update_schedule,
+    delete_schedule,
+};
+
+export default ScheduleController;
+

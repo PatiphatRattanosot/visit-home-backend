@@ -1,19 +1,23 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { html, Html } from "@elysiajs/html";
-import { swagger } from "@elysiajs/swagger";
+import swagger from "./swagger/index";
 import { jwt } from "@elysiajs/jwt";
 import { cors } from "@elysiajs/cors";
+import { logger } from "@tqman/nice-logger";
+import { elysiaXSS } from 'elysia-xss'
 
 // Connect Database
 import "./database/db_setup";
 
 // Import Controllers
-import AuthController from "./controllers/auth_controller";
-import TeacherController from "./controllers/users/teacher_controller";
-import UserController from "./controllers/users/user_controller";
-import YearController from "./controllers/year_controller";
-import ClassController from "./controllers/class_controller";
-import studentController from "./controllers/users/student_controller";
+import auth_route from "./routes/auth.route";
+import class_route from "./routes/class.route";
+import year_route from "./routes/year.route";
+import user_route from "./routes/user.route";
+import sdq_route from "./routes/sdq.route";
+import visit_info from "./routes/visit-info.route";
+import scheduleRoute from "./routes/schedule.route";
+import visualiz from "./controllers/visualiz_controller";
 
 const app = new Elysia()
   //middleware
@@ -22,138 +26,88 @@ const app = new Elysia()
   // CORS
   .use(
     cors({
-      origin:
+      origin: [
         process.env.FRONTEND_URL || "http://localhost:5173",
+        "http://localhost",
+        "http://206.189.92.255:3000",
+      ],
       credentials: true,
     })
   )
   // JWT
-  .use(jwt({ secret: process.env.JWT_SECRET }))
+  .use(jwt({ secret: process.env.JWT_SECRET, exp: '1d' }))
+  // Logger
+  .use(logger({
+    mode: "live", // "live" or "combined" (default: "combined")
+    withTimestamp: true, // optional (default: false)
+  }))
+  // XSS Protection 
+  .use(elysiaXSS({}))
   // Swagger
-  .use(
-    swagger({
-      documentation: {
-        info: {
-          title: "เอกสาร API ระบบเยี่ยมบ้าน",
-          description: "description",
-          version: "0.3.0",
-        },
-        servers: [
-          {
-            url: "http://localhost:3000",
-            description: "Development server",
-          },
-          {
-            url: "https://api.example.com",
-            description: "Production server",
-          },
-        ],
-        tags: [
-          {
-            name: "App",
-            description: "API ทั่วไปของระบบ",
-          },
-          {
-            name: "Auth",
-            description: "API สำหรับการเข้าสู่ระบบและยืนยันตัวตน ",
-          },
-          {
-            name: "User",
-            description: "API สำหรับการจัดการผู้ใช้",
-          },
-          {
-            name: "Teacher",
-            description: "API สำหรับการจัดการข้อมูลครู",
-          },
-          {
-            name: "Year",
-            description: "API สำหรับการจัดการปีการศึกษา",
-          },
-          {
-            name: "Class",
-            description: "API สำหรับการจัดการชั้นเรียน",
-          },
-        ],
-      },
-    })
-  )
+  .use(swagger)
   // Controllers
-  .group("/auth", (app) => app.use(AuthController.sign).use(AuthController.sign_out))
-  .group("", (app) =>
+  .group("/api", (app) =>
     app
-      .onBeforeHandle(async ({ cookie: { auth }, set, jwt }) => {
-        try {
-          // ตรวจสอบว่า auth cookie มีอยู่หรือไม่
-          if (!auth.value) {
-            set.status = 400;
-            return { message: "No token provided" };
-          }
-
-          // ตรวจสอบ JWT token
-          const user = await jwt.verify(auth.value);
-          if (!user) {
-            set.status = 401;
-            return { message: "Invalid token" };
-          }
-
-          // หากตรวจสอบผ่าน ให้อนุญาตให้ดำเนินการต่อ
-          return;
-        } catch (error) {
-          set.status = 401; // Unauthorized
-          return { message: "Unauthorized" };
-        }
-      })
-      // .derive(async ({ cookie: { auth }, set, jwt }) => {})
-
-      .group("/users", (app) =>
+      .use(auth_route)
+      .group("", (app) =>
         app
-          // User
-          .use(UserController.get_users)
-          .use(UserController.delete_user)
-          .use(UserController.add_admin_role)
-          .use(UserController.remove_admin_role)
-          // Teacher
-          .group("/teacher", (app) =>
-            app
-              .use(TeacherController.create_teacher)
-              .use(TeacherController.get_teacher)
-              .use(TeacherController.get_teacher_by_id)
-              .use(TeacherController.update_teacher)
-          )
-          // Student
-          .group("/student", (app) => 
-            app
-              .use(studentController.get_all)
-              .use(studentController.create)
-              .use(studentController.get_by_id)
-              .use(studentController.update)
-            )
+          .onBeforeHandle(async ({ cookie: { auth }, set, jwt, path ,}) => {
+            try {
+              if (path.startsWith("/swagger")) return;
+              // ตรวจสอบว่า auth cookie มีอยู่หรือไม่
+              if (!auth.value) {
+                set.status = 400;
+                return { message: "No token provided" };
+              }
+              // ตรวจสอบ JWT token
+              const user = await jwt.verify(auth.value);
+
+              if (!user) {
+                set.status = 401;
+                return { message: "Invalid token" };
+              }
+            } catch (error) {
+              set.status = 401;
+              return { message: "Unauthorized" };
+            }
+          })
+          .state("user", { email: "", roles: [] as string[] })
+          .derive(async ({ cookie: { auth }, jwt, store }) => {
+            if (!auth.value) return { email: "", roles: [] };
+            const user = await jwt.verify(auth.value);
+            // console.log(user);
+
+            if (!user || typeof user !== "object") return { email: "", roles: [] };
+
+            // แยก role string เป็น array (รองรับทั้ง "Teacher,Admin" และ "Teacher")
+            const userRoles = user.role
+              ? user.role.toString().split(',').map((r: string) => r.trim())
+              : [];
+            // console.log(userRoles);
+
+            store.user = {
+              email: user.email ? user.email.toString() : "",
+              roles: userRoles
+            };
+
+            return {
+              email: user.email ?? "",
+              roles: userRoles,
+            };
+          })
+          .use(class_route)
+          .use(year_route)
+          .use(user_route)
+          .use(sdq_route)
+          .use(visit_info)
+          .use(scheduleRoute)
+          .use(visualiz)
       )
-      // Year
-      .group("/year", (app) =>
-        app
-          .use(YearController.create_year)
-          .use(YearController.auto_create_year)
-          .use(YearController.get_years)
-          .use(YearController.get_year_by_id)
-          .use(YearController.update_year)
-          .use(YearController.delete_year)
-      )
-      // Class
-      .group("/class", (app) =>
-        app
-          .use(ClassController.create_class)
-          .use(ClassController.get_classes_by_year)
-          .use(ClassController.get_class_by_id)
-          .use(ClassController.update_class)
-          .use(ClassController.delete_class)
-      )
-  )
-  // Home Page
-  .get(
-    "/",
-    () =>
-      `<html>
+      // Home Page
+      .get(
+        "/",
+        () =>
+          `<html>
         <head>
           <title>Visit Home API</title>
           <script src="https://cdn.tailwindcss.com"></script>
@@ -165,7 +119,7 @@ const app = new Elysia()
             </h1>
             <p class="text-lg text-gray-700">
               ไปที่ 
-              <a href='/swagger' class="text-blue-500 underline hover:text-blue-700">
+              <a href='/api/swagger' class="text-blue-500 underline hover:text-blue-700">
                 เอกสาร API
               </a> 
               เพื่อดูรายละเอียด API ทั้งหมดที่มีในระบบ
@@ -173,10 +127,12 @@ const app = new Elysia()
           </div>
         </body>
       </html>`,
-    { detail: { tags: ["App"] } }
+        { detail: { tags: ["App"] } }
+      )
   )
+
   .listen(process.env.PORT || 3000);
 
 console.log(
-  `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
+  `🦊 Elysia is running at ${app.server?.url}api`
 );

@@ -1,0 +1,75 @@
+name: "build and deploy docker image"
+on:
+  push:
+    tags:
+      - "*" # Trigger เมื่อ push tag ใด ๆ
+
+jobs:
+  release-docker-image-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Set TAG_NAME from Git tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker Image
+        run: docker build -t ghcr.io/patiphatrattanosot/visit-home-backend:${{ env.TAG_NAME }} -t ghcr.io/patiphatrattanosot/visit-home-backend:latest -f ./Dockerfile.prod .
+
+      - name: Push Docker images to GHCR
+        run: |
+          docker push ghcr.io/patiphatrattanosot/visit-home-backend:${{ env.TAG_NAME }}
+          docker push ghcr.io/patiphatrattanosot/visit-home-backend:latest
+
+  auto-deploy-docker-job:
+    needs: release-docker-image-job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract tag name again (ensure env variable is set)
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Deploy via SSH with Password
+        env:
+          TAG_NAME: ${{ env.TAG_NAME }}
+        run: |
+          sshpass -p '${{ secrets.SSH_DIGITALOCEAN }}' ssh -o StrictHostKeyChecking=no root@206.189.92.255 << 'EOF'
+            docker logout ghcr.io
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u patiphatrattanosot --password-stdin
+
+            # ลบ container เก่า
+            docker rm -f visit-home-backend || true
+
+            # ลบ images เก่าทั้งหมดของ visit-home-backend
+            docker images ghcr.io/patiphatrattanosot/visit-home-backend --format "table {{.Repository}}:{{.Tag}}" | grep -v REPOSITORY | xargs -r docker rmi || true
+
+            # สร้าง network 
+            # docker network create visit-home-network || true
+
+            # เอา image ใหม่ตาม tag ที่ระบุ
+            docker pull ghcr.io/patiphatrattanosot/visit-home-backend:${{ env.TAG_NAME }}
+            
+            # สั่งให้รัน container ใหม่ และ map environment 
+            docker run --restart=always -d --pull always \
+            -e JWT_SECRET=${{secrets.JWT_SECRET}} \
+            -e NODE_ENV=${{secrets.NODE_ENV}} \
+            -e PORT=${{secrets.PORT}} \
+            -e FRONTEND_URL=${{secrets.FRONTEND_URL}} \
+            -e DB_URL="mongodb+srv://${{secrets.DB_USER}}:${{secrets.DB_PASSWORD}}@visithome.261oh.mongodb.net/visit_home?retryWrites=true&w=majority&appName=visithome" \
+            -e FIREBASE_API_KEY=${{secrets.FIREBASE_API_KEY}} \
+            -e FIREBASE_AUTH_DOMAIN=${{secrets.FIREBASE_AUTH_DOMAIN}} \
+            -e FIREBASE_PROJECT_ID=${{secrets.FIREBASE_PROJECT_ID}} \
+            -e FIREBASE_STORAGE_BUCKET=${{secrets.FIREBASE_STORAGE_BUCKET}} \
+            -e FIREBASE_MESSAGING_SENDER_ID=${{secrets.FIREBASE_MESSAGING_SENDER_ID}} \
+            -e FIREBASE_APP_ID=${{secrets.FIREBASE_APP_ID}} \
+            --name visit-home-backend \
+            -p 3000:3000 \
+            --network visit-home-network \
+            ghcr.io/patiphatrattanosot/visit-home-backend:${{ env.TAG_NAME }}
+          EOF

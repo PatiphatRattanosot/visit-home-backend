@@ -10,23 +10,14 @@ interface ITeacher extends Document {
   user_id: string;
   phone: string;
   status: string;
+  class_id: Schema.Types.ObjectId | string;
 }
 
 const TeacherSchema = new Schema<ITeacher>(
   {
-    user_id: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    phone: {
-      type: String,
-      required: false,
-    },
-    status: {
-      type: String,
-      default: "ทำงาน", 
-    },
+    phone: { type: String, required: false, },
+    status: { type: String, default: "ใช้งานอยู่", },
+    class_id: { type: Schema.Types.ObjectId, ref: "Class", },
   },
   {
     timestamps: true,

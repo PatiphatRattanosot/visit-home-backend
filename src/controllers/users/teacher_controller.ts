@@ -51,18 +51,41 @@ const create_teacher = async (app: Elysia) =>
     },
     {
       body: t.Object({
-        first_name: t.String(),
-        last_name: t.String(),
-        prefix: t.String(),
-        user_id: t.String(),
-        phone: t.String(),
+        first_name: t.String({ examples: ["สมชาย"] }),
+        last_name: t.String({ examples: ["ทองไทย"] }),
+        prefix: t.String({ examples: ["นาย", "นางสาว", "นาง"] }),
+        user_id: t.String({ examples: ["12345"] }),
+        phone: t.String({ maxLength: 10, examples: ["0812345678"] }),
       }),
       detail: {
         tags: ["Teacher"],
         description: "เพิ่มข้อมูลผู้ที่ปรึกษา",
       },
+      response: {
+        201: t.Object({
+          message: t.String(),
+         teacher: t.Any()
+        }),
+        400: t.Object({
+          message: t.String(),
+        }),
+        500: t.Object({
+          message: t.String(),
+        }),
+      }
     }
   );
+
+export const add_class_to_teacher = async (teacher_id: string, new_class_id: string) => {
+  try {
+    const teacher = await TeacherModel.findById(teacher_id) as ITeacher
+    teacher.class_id = new_class_id;
+    await teacher.save()
+    return { status: 200 }
+  } catch (error) {
+    return { status: 500 };
+  }
+}
 
 // ฟังก์ชัน getTeacher ใช้สำหรับสร้าง endpoint "/" เพื่อดึงข้อมูลครูที่ปรึกษา
 const get_teacher = async (app: Elysia) =>
@@ -96,7 +119,8 @@ const get_teacher_by_id = async (app: Elysia) =>
       try {
         const teacher = await TeacherModel.findOne({
           _id,
-        });
+        }).populate("class_id"); // ค้นหาครูที่ปรึกษาตาม _id และตรวจสอบว่ามี class_id อยู่หรือ
+
         if (!teacher) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: "ไม่พบข้อมูลครูที่ปรึกษานี้ในระบบ" };
@@ -134,11 +158,17 @@ const update_teacher = async (app: Elysia) =>
         teacher.last_name = last_name;
         teacher.prefix = prefix;
         teacher.phone = phone;
-        teacher.status = status; 
+        teacher.status = status;
 
-        await teacher.save(); // บันทึกข้อมูลที่อัปเดตลงในฐานข้อมูล
+        let message: string = "";
+        if (teacher.role.includes("Admin")) {
+          message = "อัพเดทข้อมูลเจ้าหน้าที่เรียบร้อย"
+        } else {
+          message = "อัพเดทข้อมูลครูที่ปรึกษาเรียบร้อย"
+        }
+        await teacher.save(); // บันทึกข้อมูลที่อัปเดตลงในฐานข้อมูลs
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
-        return { message: "อัพเดทข้อมูลครูที่ปรึกษาเรียบร้อย", teacher };
+        return { message: message, teacher };
       } catch (error) {
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
         return {
@@ -162,6 +192,22 @@ const update_teacher = async (app: Elysia) =>
       }),
     }
   );
+
+  export const delete_class_from_teacher = async (teacher_id: string) => {
+    try {
+      const teacher = await TeacherModel.findById(teacher_id) 
+      if (!teacher) {
+        return { type: true};
+      }
+      
+      teacher.class_id = undefined;
+      
+      await teacher.save()
+      return { status: 200 , type: true};
+    } catch (error) {
+      return { status: 500 , message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถลบชั้นปีออกจากครูที่ปรึกษาได้",type: false};
+    }
+  }
 
 const TeacherController = {
   create_teacher,
