@@ -4,7 +4,7 @@ import swagger from "./swagger/index";
 import { jwt } from "@elysiajs/jwt";
 import { cors } from "@elysiajs/cors";
 import { logger } from "@tqman/nice-logger";
-import { elysiaXSS } from 'elysia-xss' 
+import { elysiaXSS } from 'elysia-xss'
 
 // Connect Database
 import "./database/db_setup";
@@ -17,7 +17,7 @@ import user_route from "./routes/user.route";
 import sdq_route from "./routes/sdq.route";
 import visit_info from "./routes/visit-info.route";
 import scheduleRoute from "./routes/schedule.route";
-
+import visualiz from "./controllers/visualiz_controller";
 const app = new Elysia()
   //middleware
   // HTML
@@ -74,18 +74,18 @@ const app = new Elysia()
             if (!auth.value) return { email: "", roles: [] };
             const user = await jwt.verify(auth.value);
             // console.log(user);
-            
+
             if (!user || typeof user !== "object") return { email: "", roles: [] };
 
             // แยก role string เป็น array (รองรับทั้ง "Teacher,Admin" และ "Teacher")
-            const userRoles = user.role 
+            const userRoles = user.role
               ? user.role.toString().split(',').map((r: string) => r.trim())
               : [];
             // console.log(userRoles);
-            
-            store.user = { 
-              email: user.email ? user.email.toString() : "", 
-              roles: userRoles 
+
+            store.user = {
+              email: user.email ? user.email.toString() : "",
+              roles: userRoles
             };
 
             return {
@@ -99,6 +99,7 @@ const app = new Elysia()
           .use(sdq_route)
           .use(visit_info)
           .use(scheduleRoute)
+          .use(visualiz)
       )
       // Home Page
       .get(
