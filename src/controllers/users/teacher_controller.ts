@@ -193,6 +193,22 @@ const update_teacher = async (app: Elysia) =>
     }
   );
 
+  export const delete_class_from_teacher = async (teacher_id: string) => {
+    try {
+      const teacher = await TeacherModel.findById(teacher_id) 
+      if (!teacher) {
+        return { type: true};
+      }
+      
+      teacher.class_id = undefined;
+      
+      await teacher.save()
+      return { status: 200 , type: true};
+    } catch (error) {
+      return { status: 500 , message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถลบชั้นปีออกจากครูที่ปรึกษาได้",type: false};
+    }
+  }
+
 const TeacherController = {
   create_teacher,
   get_teacher_by_id,

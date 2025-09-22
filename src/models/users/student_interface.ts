@@ -103,7 +103,7 @@ interface IStudent extends Document {
   prefix: string;
   role: string[];
   user_id: string;
-  class_id: ObjectId | string;
+  class_id: ObjectId | null| string;
   image_url?: string;
   phone: string;
   yearly_data: IYearlyData[];

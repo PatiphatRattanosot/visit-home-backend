@@ -1,9 +1,8 @@
-
 import { Elysia, t } from "elysia";
 import ClassModel, { IClass } from "../models/class_model";
-import { auto_create_student } from "./users/student_controller";
+import { auto_create_student, update_student_m3_m6 } from "./users/student_controller";
 import { IStudent } from "../models/users/student_interface";
-import { add_class_to_teacher } from "./users/teacher_controller";
+import { add_class_to_teacher, delete_class_from_teacher } from "./users/teacher_controller";
 
 const create_class = async (app: Elysia) =>
   app.post(
@@ -313,6 +312,10 @@ const delete_class = async (app: Elysia) =>
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
           return { message: `ไม่พบชั้นปีสำหรับ ID ${class_id}` };
         }
+        if (class_data.teacher_id) {
+          const res = await delete_class_from_teacher(class_data.teacher_id.toString());
+        }
+
         set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
         return {
           message: `ลบชั้นปี ${class_data.room} ห้องที่ ${class_data.number} สำเร็จ`,
@@ -380,10 +383,18 @@ export const auto_update_classes_by_year = async (old_year: string, new_year: st
     if (old_classes.length === 0) {
       return { message: `ไม่พบชั้นปีสำหรับปีการศึกษา ${old_year}`, status: 404, type: false }
     }
-    
+
     for (const old_class of old_classes) {
-      if (old_class.number === 1, old_class.room === 2,  old_class.room === 4, old_class.room === 5) {
-        await auto_create_class(old_class, new_year); 
+      if (old_class.room === 1 || old_class.room === 2 || old_class.room === 4 || old_class.room === 5) {
+        await auto_create_class(old_class, new_year);
+        // console.log(`ชั้นปี ${old_class.room} ห้องที่ ${old_class.number} เลื่อนชั้นปี`);
+      } else {
+        if (old_class.students && old_class.students.length > 0) {
+          for (const student_id of old_class.students) {
+            await update_student_m3_m6(student_id.toString())
+            // console.log(`Processing student ${student_id} for graduation`);
+          }
+        }
       }
     }
 
@@ -395,8 +406,10 @@ export const auto_update_classes_by_year = async (old_year: string, new_year: st
 }
 
 const auto_create_class = async (class_data: IClass, new_year: string) => {
-  if (!class_data._id)  return 
+  if (!class_data._id) return
+  console.log(class_data);
   
+
   const res = await auto_create_student(class_data._id.toString(), new_year) as any;
   if (res?.type === true) {
     const { new_students } = res
@@ -408,7 +421,7 @@ const auto_create_class = async (class_data: IClass, new_year: string) => {
       students: new_students
     });
 
-    await new_class.save();
+    // await new_class.save();
     return
   }
 

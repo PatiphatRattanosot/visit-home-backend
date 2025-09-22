@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import { ObjectId } from "mongodb"
 import YearModel, { IYear } from "../models/year_model";
 import { auto_update_classes_by_year } from "./class_controller";
 
@@ -62,13 +63,15 @@ const auto_create_year = async (app: Elysia) =>
 
         if (old_year._id && new_year._id) {
           const res = await auto_update_classes_by_year(old_year._id.toString(), new_year._id.toString());
+          
 
           if (res.type === true) {
+            await YearModel.findByIdAndDelete(new_year._id);
             set.status = 201; // ตั้งค่า HTTP status เป็น 201 (Created)
             return { message: `สร้างปีการศึกษา ${new_year.year} สำเร็จ` };
           }
         }
-        await YearModel.findByIdAndDelete(new_year._id);
+        
         // console.log(delete_year);
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
 
@@ -116,12 +119,13 @@ const get_years = async (app: Elysia) =>
   );
 
 // ฟังก์ชันสำหรับดึงข้อมูลปีการศึกษาโดยใช้ year_id
-const get_year_by_id = async (app: Elysia) =>
+const get_year_by_name= async (app: Elysia) =>
   app.get(
     "/:year",
     async ({ params, set }) => {
       try {
         const { year } = params; // ดึง year_id จากพารามิเตอร์
+        
         const yearData = await YearModel.find({ year }); // ค้นหาปีการศึกษาตาม year_id
         if (!yearData) {
           set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
@@ -287,7 +291,7 @@ const YearController = {
   create_year,
   auto_create_year,
   get_years,
-  get_year_by_id,
+  get_year_by_name,
   update_year,
   update_appointment_time,
   delete_year,

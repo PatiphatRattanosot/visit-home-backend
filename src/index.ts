@@ -18,6 +18,7 @@ import sdq_route from "./routes/sdq.route";
 import visit_info from "./routes/visit-info.route";
 import scheduleRoute from "./routes/schedule.route";
 import visualiz from "./controllers/visualiz_controller";
+
 const app = new Elysia()
   //middleware
   // HTML
@@ -50,7 +51,7 @@ const app = new Elysia()
       .use(auth_route)
       .group("", (app) =>
         app
-          .onBeforeHandle(async ({ cookie: { auth }, set, jwt, path }) => {
+          .onBeforeHandle(async ({ cookie: { auth }, set, jwt, path ,}) => {
             try {
               if (path.startsWith("/swagger")) return;
               // ตรวจสอบว่า auth cookie มีอยู่หรือไม่
