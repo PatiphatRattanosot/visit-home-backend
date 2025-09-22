@@ -19,7 +19,10 @@ export default (app:Elysia) =>
               {
                 url: "http://206.189.92.255:3000",
                 description: "Production server",
-              },
+              },{
+                url: "https://visit-home-backend.onrender.com",
+                description: "Production server",
+              }
             ],
             tags: [
               {
