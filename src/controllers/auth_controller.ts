@@ -42,11 +42,13 @@ const sign = async (app: Elysia) =>
           const token = await jwt.sign({ email, role: user.role.toString() });
           // ตั้งค่า cookie สำหรับการยืนยันตัวตน
           auth.set({
-            value: token, // ใส่ token ที่สร้างขึ้น
-            httpOnly: true, // ป้องกันการเข้าถึง cookie จาก JavaScript ฝั่ง client
-            secure: process.env.NODE_ENV === "production", // ใช้ secure cookie ใน production
-            maxAge: 24 * 60 * 60, // อายุของ cookie (1 วัน)
-            path: "/", // ใช้ cookie ได้ทุก path
+            value: token,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 24 * 60 * 60 * 1000, 
+            path: "/",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // สำคัญมาก! เพื่อให้ทำงานข้าม domain
+            domain: process.env.NODE_ENV === "production" ? undefined : "localhost" // ไม่ตั้ง domain ใน production เพื่อให้ยืดหยุ่น
           });
 
           set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)

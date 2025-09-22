@@ -28,8 +28,8 @@ const app = new Elysia()
     cors({
       origin: [
         process.env.FRONTEND_URL || "http://localhost:5173",
-        "http://localhost",
-        "http://206.189.92.255:3000",
+        "https://project-visit-home.xyz",
+        "https://project-visit-home.vercel.app",
       ],
       credentials: true,
     })
