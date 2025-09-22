@@ -24,7 +24,7 @@ export default (app: Elysia) =>
                     .use(YearController.delete_year)
             )
             // permissions: admin, teacher, student
-            .use(YearController.get_year_by_id)
+            .use(YearController.get_year_by_name)
             .use(YearController.get_years)
 
     )
