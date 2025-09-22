@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import ClassModel, { IClass } from "../models/class_model";
-import { auto_create_student, update_student_m3_m6 } from "./users/student_controller";
+import { auto_update_for_student, update_student_m3_m6 } from "./users/student_controller";
 import { IStudent } from "../models/users/student_interface";
 import { add_class_to_teacher, delete_class_from_teacher } from "./users/teacher_controller";
 
@@ -386,12 +386,20 @@ export const auto_update_classes_by_year = async (old_year: string, new_year: st
 
     for (const old_class of old_classes) {
       if (old_class.room === 1 || old_class.room === 2 || old_class.room === 4 || old_class.room === 5) {
-        await auto_create_class(old_class, new_year);
+        const res = await auto_create_class(old_class, new_year);
+        if (res?.type !== true) {
+          return { message: `สร้างชั้นปีใหม่ไม่สำเร็จ`, status: 500, type: false }
+        }
+        return { message: `สร้างชั้นปีใหม่สำเร็จ`, status: 200, type: true }
         // console.log(`ชั้นปี ${old_class.room} ห้องที่ ${old_class.number} เลื่อนชั้นปี`);
       } else {
         if (old_class.students && old_class.students.length > 0) {
           for (const student_id of old_class.students) {
-            await update_student_m3_m6(student_id.toString())
+            const res = await update_student_m3_m6(student_id.toString())
+            if (res?.type !== true) {
+              return { message: `อัพเดตข้อมูลนักเรียนไม่สำเร็จ`, status: 500, type: false }
+            }
+            return { message: `อัพเดตข้อมูลนักเรียนสำเร็จ`, status: 200, type: true }
             // console.log(`Processing student ${student_id} for graduation`);
           }
         }
@@ -406,13 +414,17 @@ export const auto_update_classes_by_year = async (old_year: string, new_year: st
 }
 
 const auto_create_class = async (class_data: IClass, new_year: string) => {
-  if (!class_data._id) return
-  console.log(class_data);
-  
+  if (!class_data._id) return {type: false}
 
-  const res = await auto_create_student(class_data._id.toString(), new_year) as any;
-  if (res?.type === true) {
-    const { new_students } = res
+  if (class_data.students && class_data.students.length > 0) {
+    let new_students: string[] = []
+    for (const student_id of class_data.students) {
+      const res = await auto_update_for_student(student_id.toString(), new_year) as any;
+      if (res?.type === true) {
+        if (res?.student_id) new_students.push(res.student_id.toString())
+      }
+    }
+
     const new_class = new ClassModel({
       room: (class_data.room + 1),
       number: class_data.number,
@@ -420,11 +432,11 @@ const auto_create_class = async (class_data: IClass, new_year: string) => {
       teacher_id: class_data.teacher_id,
       students: new_students
     });
+    await new_class.save();
+    return {type: true}
 
-    // await new_class.save();
-    return
   }
-
+  return {type: false}
 }
 const ClassController = {
   create_class,

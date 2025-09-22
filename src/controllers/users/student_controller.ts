@@ -392,54 +392,39 @@ const update_student_profile = (app: Elysia) =>
     }
   );
 
-export const auto_create_student = async (class_id: string, new_year: string) => {
-  const old_students = await StudentModel.find({ class_id: class_id });
+export const auto_update_for_student = async (student_id: string, new_year: string) => {
+  const old_student = await StudentModel.findOne({ _id: student_id });
 
-  if (old_students.length <= 0) {
-    return { type: false }
-  }
-  let new_students: any[] = [];
-  for (const old_student of old_students) {
-    const res = await auto_update_for_student(old_student, new_year) as any;
-    if (res?.type === true) new_students.push({ _id: res.student_id });
-  }
-  return { type: true, new_students };
-}
+  if (!old_student) return { type: false }
 
-const auto_update_for_student = async (old_student: IStudent, new_year: string) => {
-  try {
-    const existing_student_by_year = await StudentModel.findOne({ user_id: old_student.user_id, "yearly_data.year": new_year });
-    if (existing_student_by_year) {
-      return { type: false }
-    }
-    // คัดลอกข้อมูล personal_info จากปีล่าสุด
-    const old_personal_info = old_student.yearly_data.find((y) => y.year.toString() === old_student.yearly_data[old_student.yearly_data.length - 1].year.toString())?.personal_info || {}
+  // คัดลอกข้อมูล personal_info จากปีล่าสุด
+  const old_personal_info = old_student.yearly_data.find((y) => y.year.toString() === old_student.yearly_data[old_student.yearly_data.length - 1].year.toString())?.personal_info || {}
 
-    const new_yearly_data = {
-      year: new_year,
-      personal_info: old_personal_info
-    } as IYearlyData
-    const update_student = await StudentModel.findByIdAndUpdate({ _id: old_student._id })
-    update_student?.yearly_data.push(new_yearly_data)
+  const new_yearly_data = {
+    year: new_year,
+    personal_info: old_personal_info
+  } as IYearlyData
 
-    // await update_student?.save()
-    return { message: "เพิ่มข้อมูลนักเรียนสำเร็จ", status: 201, type: true, student_id: update_student?._id }
-  } catch (error) {
-    return { type: false }
-  }
+  const update_student = await StudentModel.findByIdAndUpdate({ _id: old_student._id })
+  
+  update_student?.yearly_data.push(new_yearly_data)
+  
+  await update_student?.save()
+  return { type: true, student_id: update_student?._id }
+
 }
 
 export const update_student_m3_m6 = async (student_id: string) => {
   try {
-    const student = await StudentModel.findOne({_id: student_id});
+    const student = await StudentModel.findOne({ _id: student_id });
     if (!student) {
-      return { type: false, message: "ไม่พบนักเรียน", status: 404}
+      return { type: false, message: "ไม่พบนักเรียน", status: 404 }
     }
     student.class_id = null;
     await student.save();
-    return { type: true, message: "ลบนักเรียนออกจากชั้นปีสำเร็จ", status: 200}
+    return { type: true, message: "ลบนักเรียนออกจากชั้นปีสำเร็จ", status: 200 }
   } catch (error) {
-    return { type: false, message: "เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลนักเรียนได้", status: 500}
+    return { type: false, message: "เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลนักเรียนได้", status: 500 }
   }
 }
 
