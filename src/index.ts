@@ -42,8 +42,7 @@ const app = new Elysia()
     mode: "live", // "live" or "combined" (default: "combined")
     withTimestamp: true, // optional (default: false)
   }))
-  // XSS Protection 
-  .use(elysiaXSS({}))
+  // XSS Protection
   // Swagger
   .use(swagger)
   // Controllers
