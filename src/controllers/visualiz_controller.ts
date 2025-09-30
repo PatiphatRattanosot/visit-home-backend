@@ -429,13 +429,43 @@ export default (app: Elysia) =>
                                 // 4. ประเภทที่อยู่อาศัย
                                 const housingType = yearlyData.family_info?.housing_type;
                                 if (housingType) {
-                                    housing_types[housingType] = (housing_types[housingType] || 0) + 1;
+                                    // จัดกลุ่มตาม value-label structure
+                                    let typeKey = '';
+                                    switch (housingType) {
+                                        case '0':
+                                            typeKey = '0';
+                                            break;
+                                        case '1':
+                                            typeKey = '1';
+                                            break;
+                                        case '2':
+                                            typeKey = '2';
+                                            break;
+                                        default:
+                                            typeKey = housingType;
+                                    }
+                                    housing_types[typeKey] = (housing_types[typeKey] || 0) + 1;
                                 }
 
                                 // 5. สภาพที่อยู่อาศัย
                                 const housingCondition = yearlyData.family_info?.housing_condition;
                                 if (housingCondition) {
-                                    housing_conditions[housingCondition] = (housing_conditions[housingCondition] || 0) + 1;
+                                    // จัดกลุ่มตาม value-label structure
+                                    let conditionKey = '';
+                                    switch (housingCondition) {
+                                        case '0':
+                                            conditionKey = '0';
+                                            break;
+                                        case '1':
+                                            conditionKey = '1';
+                                            break;
+                                        case '2':
+                                            conditionKey = '2';
+                                            break;
+                                        default:
+                                            conditionKey = housingCondition;
+                                    }
+                                    housing_conditions[conditionKey] = (housing_conditions[conditionKey] || 0) + 1;
                                 }
                             }
                         });
@@ -493,7 +523,7 @@ export default (app: Elysia) =>
                             allowance_80_100: t.Number({ examples: [3] }),
                             above_100: t.Number({ examples: [1] })
                         }),
-                        housing_types: t.Record(t.String(), t.Number()),
+                        housing_types: t.Record(t.String({examples:["0"]}), t.Number({ examples: [10] })),
                         housing_conditions: t.Record(t.String(), t.Number())
                     }))
                 }),
