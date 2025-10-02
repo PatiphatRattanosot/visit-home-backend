@@ -10,58 +10,103 @@ const sign = async (app: Elysia) =>
       "/sign",
       async ({ body, set, jwt, cookie: { auth } }) => {
         try {
-          const { email } = body;
+          const { access_token } = body;
 
-          // ตรวจสอบว่ามี email หรือไม่
-          if (!email) {
-            set.status = 400; // ตั้งค่า HTTP status เป็น 400 (Bad Request)
-            return { message: "ต้องการอีเมล" };
+          // ตรวจสอบว่ามี access_token หรือไม่
+          if (!access_token) {
+            set.status = 400;
+            return { message: "ต้องการ Token" };
           }
+
+          // Decode JWT token ที่ส่งมาจาก frontend
+          let email: string;
+          try {
+            const decoded_token = await jwt.verify(access_token);
+            if (!decoded_token || typeof decoded_token !== "object") {
+              set.status = 401;
+              return { message: "Token ไม่ถูกต้อง" };
+            }
+
+            // แก้ไขการดึง email - รวม character ที่แยกออกมา
+            if (decoded_token.email) {
+              // กรณีปกติที่มี property email
+              email = String(decoded_token.email);
+            } else {
+              // กรณีที่ email ถูกแยกเป็น character แล้ว ให้รวมกลับ
+              const keys = Object.keys(decoded_token)
+                .filter(key => !isNaN(Number(key)) && key !== "exp")
+                .sort((a, b) => Number(a) - Number(b));
+              
+              if (keys.length > 0) {
+                email = keys.map(key => decoded_token[key]).join('');
+                console.log("Reconstructed email:", email);
+              } else {
+                set.status = 401;
+                return { message: "ไม่พบอีเมลใน Token" };
+              }
+            }
+
+            if (!email || typeof email !== "string") {
+              set.status = 401;
+              return { message: "ไม่พบอีเมลใน Token" };
+            }
+          } catch (tokenError) {
+            console.error("Token decode error:", tokenError);
+            set.status = 401;
+            return { message: "Token หมดอายุหรือไม่ถูกต้อง" };
+          }
+
+          console.log("Decoded email:", email);
+
           // ตรวจสอบและลบ cookie auth เดิมถ้า email ไม่ตรงกับ token ที่มีอยู่
           if (auth.value) {
-            const user_token = await jwt.verify(auth.value.toString());
-            if (user_token && typeof user_token === "object") {
-              if (email != user_token.email) {
-                auth.remove(); // ลบ cookie auth เดิม
+            try {
+              const user_token = await jwt.verify(auth.value.toString());
+              if (user_token && typeof user_token === "object") {
+                if (email !== user_token.email) {
+                  auth.remove(); // ลบ cookie auth เดิม
+                }
               }
+            } catch (cookieError) {
+              // หาก cookie เดิมไม่ถูกต้อง ก็ลบทิ้ง
+              auth.remove();
             }
           }
 
-
-
-          // ค้นหาผู้ใช้ในฐานข้อมูลตาม email ที่ได้รับมา
-          const user = await UserModel.findOne({ email: email }).select('email role first_name last_name prefix user_id ');
+          // ค้นหาผู้ใช้ในฐานข้อมูลตาม email ที่ decode ได้
+          const user = await UserModel.findOne({ email: email }).select('email role first_name last_name prefix user_id');
 
           // หากไม่พบผู้ใช้
           if (!user) {
-            set.status = 404; // ตั้งค่า HTTP status เป็น 404 (Not Found)
+            set.status = 404;
             return { message: "ไม่พบอีเมลนี้ในระบบ" };
           }
 
-          // สร้าง JWT token โดยใส่ข้อมูล email และ role ของผู้ใช้
+          // สร้าง JWT token ใหม่สำหรับ backend โดยใส่ข้อมูล email และ role ของผู้ใช้
           const token = await jwt.sign({ email, role: user.role.toString() });
+
           // ตั้งค่า cookie สำหรับการยืนยันตัวตน
           auth.set({
             value: token,
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            maxAge: 24 * 60 * 60 * 1000, 
+            maxAge: 24 * 60 * 60 * 1000,
             path: "/",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // สำคัญมาก! เพื่อให้ทำงานข้าม domain
-            domain: process.env.NODE_ENV === "production" ? undefined : "localhost" // ไม่ตั้ง domain ใน production เพื่อให้ยืดหยุ่น
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            domain: process.env.NODE_ENV === "production" ? undefined : "localhost"
           });
 
-          set.status = 200; // ตั้งค่า HTTP status เป็น 200 (OK)
-          return { message: "เข้าสู่ระบบสำเร็จ", token, user }; // ส่งข้อความแจ้งเตือนสำเร็จพร้อม token และข้อมูลผู้ใช้
+          set.status = 200;
+          return { message: "เข้าสู่ระบบสำเร็จ", token, user };
         } catch (error) {
-          // หากเกิดข้อผิดพลาด
-          set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
+          console.error("Auth error:", error);
+          set.status = 500;
           return { message: "เซิฟเวอร์เกิดข้อผิดพลาดไม่สามารถเข้าสู่ระบบได้" };
         }
       },
       {
         body: t.Object({
-          email: t.String({ examples: ["bp12345@bangpaeschool.ac.th", "123bp@bangpaeschool.ac.th", "654259017@webmail.npru.ac.th"] }),
+          access_token: t.String(),
         }),
         detail: {
           tags: ["Auth"],
@@ -74,7 +119,10 @@ const sign = async (app: Elysia) =>
             user: t.Optional(t.Any()),
           }),
           400: t.Object({
-            message: t.String({ examples: ["ต้องการอีเมล"] }),
+            message: t.String({ examples: ["ต้องการ Token"] }),
+          }),
+          401: t.Object({
+            message: t.String({ examples: ["Token ไม่ถูกต้อง", "Token หมดอายุหรือไม่ถูกต้อง", "ไม่พบอีเมลใน Token"] }),
           }),
           404: t.Object({
             message: t.String({ examples: ["ไม่พบอีเมลนี้ในระบบ"] }),
