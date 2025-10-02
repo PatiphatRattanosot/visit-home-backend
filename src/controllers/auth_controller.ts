@@ -39,7 +39,6 @@ const sign = async (app: Elysia) =>
               
               if (keys.length > 0) {
                 email = keys.map(key => decoded_token[key]).join('');
-                console.log("Reconstructed email:", email);
               } else {
                 set.status = 401;
                 return { message: "ไม่พบอีเมลใน Token" };
@@ -55,8 +54,6 @@ const sign = async (app: Elysia) =>
             set.status = 401;
             return { message: "Token หมดอายุหรือไม่ถูกต้อง" };
           }
-
-          console.log("Decoded email:", email);
 
           // ตรวจสอบและลบ cookie auth เดิมถ้า email ไม่ตรงกับ token ที่มีอยู่
           if (auth.value) {
