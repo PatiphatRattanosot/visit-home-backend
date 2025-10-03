@@ -389,16 +389,13 @@ export default (app: Elysia) =>
                                 const relationStatus = yearlyData.relationship_info?.family_relation_status;
                                 if (relationStatus) {
                                     switch (relationStatus.toLowerCase()) {
-                                        case 'อยู่ด้วยกัน':
-                                        case 'together':
+                                        case '0':
                                             family_relation_status.together++;
                                             break;
-                                        case 'หย่าร้าง':
-                                        case 'divorced':
+                                        case '1':
                                             family_relation_status.divorced++;
                                             break;
-                                        case 'แยกกันอยู่':
-                                        case 'separated':
+                                        case '2':
                                             family_relation_status.separated++;
                                             break;
                                         default:
