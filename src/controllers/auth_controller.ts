@@ -71,7 +71,7 @@ const sign = async (app: Elysia) =>
           }
 
           // ค้นหาผู้ใช้ในฐานข้อมูลตาม email ที่ decode ได้
-          const user = await UserModel.findOne({ email: email }).select('email role first_name last_name prefix user_id');
+          const user = await UserModel.findOne({ email: email }).select('email role first_name last_name prefix user_id class_id');
 
           // หากไม่พบผู้ใช้
           if (!user) {
