@@ -73,7 +73,7 @@ export default (app: Elysia) =>
                     return { message: "ไม่พบข้อมูลครูในระบบ", active_total, inactive_total };
                 }
                 all_teacher.forEach(teacher => {
-                    if (teacher.status === "ทำงานอยู่") active_total++;
+                    if (teacher.status === "ใช้งานอยู่") active_total++;
                     if (teacher.status === "ไม่ได้ใช้งานแล้ว") inactive_total++;
                 });
 
