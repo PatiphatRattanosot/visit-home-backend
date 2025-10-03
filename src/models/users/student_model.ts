@@ -122,7 +122,7 @@ const YearlyDataSchema = new Schema(
 
 const StudentSchema = new Schema(
   {
-    class_id: { type: Schema.Types.ObjectId, ref: "Class", required: true },
+    class_id: { type: Schema.Types.ObjectId, ref: "Class" },
     image_url: { type: String, default: "" },
     phone: { type: String, default: "" },
     yearly_data: [YearlyDataSchema],

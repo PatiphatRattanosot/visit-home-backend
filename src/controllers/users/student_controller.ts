@@ -72,7 +72,6 @@ const create_many = (app: Elysia) =>
   app.post(
     "/create_many",
     async ({ body, set }) => {
-      console.log(body.length);
 
       try {
         let existing_students: string[] = []
@@ -100,26 +99,24 @@ const create_many = (app: Elysia) =>
             unable_to_create.push(`${prefix}${first_name} ${last_name}`);
             continue;
           }
-          console.log(`สร้างข้อมูลนักเรียน ${prefix}${first_name} ${last_name} สำเร็จ`);
-
           await new_student.save();
           await add_student_to_class(class_id, new_student._id.toString());
           added_students.push(`${prefix}${first_name} ${last_name}`);
         }
         if (existing_students.length > 0) {
-          console.log(existing_students.length);
+          // console.log(existing_students.length);
 
           set.status = 200;
           return { message: "มีข้อมูลนักเรียนบางคนในระบบแล้ว", data: { existing_students, added_students } };
         }
         if (unable_to_create.length > 0) {
-          console.log(unable_to_create.length);
+          // console.log(unable_to_create.length);
 
           set.status = 500;
           return { message: "เกิดข้อผิดพลาดบางอย่างไม่สามารถเพิ่มข้อมูลนักเรียนได้", data: { unable_to_create, added_students } };
         }
         set.status = 201;
-        console.log(added_students.length);
+        // console.log(added_students.length);
 
         return { message: "เพิ่มข้อมูลนักเรียนทั้งหมดสำเร็จ", data: added_students };
       } catch (error) {
@@ -243,12 +240,16 @@ const update_student_info = (app: Elysia) =>
       try {
         const student = await StudentModel.findByIdAndUpdate(
           params.id,
-          { first_name, last_name, prefix, user_id, class_id, phone },
+          { first_name, last_name, prefix, user_id, phone },
           { new: true }
         );
         if (!student) {
           set.status = 404;
           return { message: "ไม่พบข้อมูลนักเรียนที่ต้องการแก้ไข" };
+        } 
+        if (class_id ) {
+          student.class_id = class_id;
+          await student.save();
         }
         set.status = 200;
         return { message: "แก้ไขข้อมูลนักเรียนสำเร็จ", student };
@@ -266,7 +267,7 @@ const update_student_info = (app: Elysia) =>
         last_name: t.String(),
         prefix: t.String(),
         user_id: t.String(),
-        class_id: t.String(),
+        class_id: t.Optional(t.String()), 
         phone: t.String(),
       }),
       detail: {
@@ -393,30 +394,37 @@ const update_student_profile = (app: Elysia) =>
   );
 
 export const auto_update_for_student = async (student_id: string, new_year: string) => {
-  const old_student = await StudentModel.findOne({ _id: student_id });
+  try {
+    const old_student = await StudentModel.findOne({ _id: student_id });
 
-  if (!old_student) return { type: false }
+    if (!old_student) return { type: false }
 
-  // คัดลอกข้อมูล personal_info จากปีล่าสุด
-  const old_personal_info = old_student.yearly_data.find((y) => y.year.toString() === old_student.yearly_data[old_student.yearly_data.length - 1].year.toString())?.personal_info || {}
+    // คัดลอกข้อมูล personal_info จากปีล่าสุด
+    const latest_yearly_data = old_student.yearly_data[old_student.yearly_data.length - 1];
+    const old_personal_info = latest_yearly_data?.personal_info || {};
 
-  const new_yearly_data = {
-    year: new_year,
-    personal_info: old_personal_info
-  } as IYearlyData
+    const new_yearly_data = {
+      year: new_year,
+      personal_info: old_personal_info,
+      isCompleted: "Incomplete"
+    } as IYearlyData
 
-  const update_student = await StudentModel.findByIdAndUpdate({ _id: old_student._id })
-  
-  update_student?.yearly_data.push(new_yearly_data)
-  
-  await update_student?.save()
-  return { type: true, student_id: update_student?._id }
+    // เพิ่ม yearly_data ใหม่
+    old_student.yearly_data.push(new_yearly_data);
 
+    await old_student.save();
+
+    return { type: true, student_id: old_student._id };
+
+  } catch (error) {
+    return { type: false };
+  }
 }
 
 export const update_student_m3_m6 = async (student_id: string) => {
   try {
     const student = await StudentModel.findOne({ _id: student_id });
+
     if (!student) {
       return { type: false, message: "ไม่พบนักเรียน", status: 404 }
     }
@@ -424,6 +432,7 @@ export const update_student_m3_m6 = async (student_id: string) => {
     await student.save();
     return { type: true, message: "ลบนักเรียนออกจากชั้นปีสำเร็จ", status: 200 }
   } catch (error) {
+
     return { type: false, message: "เกิดข้อผิดพลาดไม่สามารถแก้ไขข้อมูลนักเรียนได้", status: 500 }
   }
 }
