@@ -63,6 +63,7 @@ const auto_create_year = async (app: Elysia) =>
 
         if (old_year._id && new_year._id) {
           const res = await auto_update_classes_by_year(old_year._id.toString(), new_year._id.toString());
+          
           if (res.type === true) {
             set.status = 201; // ตั้งค่า HTTP status เป็น 201 (Created)
             return { message: `สร้างปีการศึกษา ${new_year.year} สำเร็จ` };

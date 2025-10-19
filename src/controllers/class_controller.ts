@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import ClassModel, { IClass } from "../models/class_model";
 import { auto_update_for_student, update_student_m3_m6 } from "./users/student_controller";
 import { IStudent } from "../models/users/student_interface";
+import StudentModel from "../models/users/student_model";
 import { add_class_to_teacher, delete_class_from_teacher } from "./users/teacher_controller";
 
 const create_class = async (app: Elysia) =>
@@ -201,7 +202,7 @@ const get_class_by_teacher_id = async (app: Elysia) =>
           classes: filteredClasses,
         };
       } catch (error) {
-        console.log(error);
+        // console.log(error);
 
         set.status = 500; // ตั้งค่า HTTP status เป็น 500 (Internal Server Error)
         return {
@@ -346,7 +347,7 @@ export const add_student_to_class = async (class_id: string, student_id: string)
     if (class_data.students && class_data.students.includes(student_id as any)) return true
     class_data.students = class_data.students ? [...class_data.students, student_id as any] : [student_id as any]
     await class_data.save()
-    console.log(`เพิ่มนักเรียนที่มี ID ${student_id} เข้าไปในชั้นปีที่มี ID ${class_id} สำเร็จ`);
+    // console.log(`เพิ่มนักเรียนที่มี ID ${student_id} เข้าไปในชั้นปีที่มี ID ${class_id} สำเร็จ`);
 
     return true
   } catch (error) {
@@ -385,26 +386,29 @@ export const auto_update_classes_by_year = async (old_year: string, new_year: st
     }
 
     for (const old_class of old_classes) {
+      // ม.1, ม.2, ม.4, ม.5 เลื่อนชั้น
       if (old_class.room === 1 || old_class.room === 2 || old_class.room === 4 || old_class.room === 5) {
         const res = await auto_create_class(old_class, new_year);
         if (res?.type !== true) {
-          return { message: `สร้างชั้นปีใหม่ไม่สำเร็จ`, status: 500, type: false }
+          // console.log(`ไม่สามารถสร้างชั้นปีใหม่สำหรับห้อง ${old_class.room}/${old_class.number}`);
         }
-        return { message: `สร้างชั้นปีใหม่สำเร็จ`, status: 200, type: true }
         // console.log(`ชั้นปี ${old_class.room} ห้องที่ ${old_class.number} เลื่อนชั้นปี`);
-      } else {
+      } else if (old_class.room === 3 || old_class.room === 6) {
+        // ม.3, ม.6 จบการศึกษา - เอา class_id ออก
         if (old_class.students && old_class.students.length > 0) {
           for (const student_id of old_class.students) {
-            const res = await update_student_m3_m6(student_id.toString())
+            const res = await update_student_m3_m6(student_id.toString());
             if (res?.type !== true) {
-              return { message: `อัพเดตข้อมูลนักเรียนไม่สำเร็จ`, status: 500, type: false }
+              // console.log(`ไม่สามารถอัพเดตข้อมูลนักเรียนจบการศึกษา ${student_id}`);
             }
-            return { message: `อัพเดตข้อมูลนักเรียนสำเร็จ`, status: 200, type: true }
             // console.log(`Processing student ${student_id} for graduation`);
           }
         }
       }
     }
+
+    // สร้างชั้น ม.1 และ ม.4 ใหม่สำหรับนักเรียนใหม่
+    await create_new_first_classes(new_year);
 
     return { message: `อัพเดตชั้นปีจากปีการศึกษา ${old_year} ไปยัง ${new_year} สำเร็จ`, status: 200, type: true }
 
@@ -425,18 +429,102 @@ const auto_create_class = async (class_data: IClass, new_year: string) => {
       }
     }
 
+    // กำหนดชั้นปีใหม่ตามชั้นปีเดิม
+    let new_room = class_data.room;
+    if (class_data.room === 1) {
+      new_room = 2; // ม.1 -> ม.2
+    } else if (class_data.room === 2) {
+      new_room = 3; // ม.2 -> ม.3
+    } else if (class_data.room === 4) {
+      new_room = 5; // ม.4 -> ม.5
+    } else if (class_data.room === 5) {
+      new_room = 6; // ม.5 -> ม.6
+    }
+
     const new_class = new ClassModel({
-      room: (class_data.room + 1),
+      room: new_room,
       number: class_data.number,
       year_id: new_year,
-      teacher_id: class_data.teacher_id,
-      students: new_students
+      students: new_students,
+      teacher_id: class_data.teacher_id // คงครูเดิม
     });
-    await new_class.save();
-    return {type: true}
 
+    const result = await new_class.save();
+    
+    // อัพเดต class_id ใน students
+    if (result._id && new_students.length > 0) {
+      for (const student_id of new_students) {
+        await StudentModel.findByIdAndUpdate(student_id, { class_id: result._id });
+      }
+    }
+
+    // console.log(`สร้างชั้นปีใหม่ ม.${new_room}/${class_data.number} สำเร็จ`);
+    return { type: true, class_id: result._id };
+  } else {
+    // สร้างชั้นปีใหม่โดยไม่มีนักเรียน
+    let new_room = class_data.room;
+    if (class_data.room === 1) {
+      new_room = 2; // ม.1 -> ม.2
+    } else if (class_data.room === 2) {
+      new_room = 3; // ม.2 -> ม.3
+    } else if (class_data.room === 4) {
+      new_room = 5; // ม.4 -> ม.5
+    } else if (class_data.room === 5) {
+      new_room = 6; // ม.5 -> ม.6
+    }
+
+    const new_class = new ClassModel({
+      room: new_room,
+      number: class_data.number,
+      year_id: new_year,
+      students: [],
+      teacher_id: class_data.teacher_id
+    });
+
+    const result = await new_class.save();
+    // console.log(`สร้างชั้นปีใหม่ ม.${new_room}/${class_data.number} โดยไม่มีนักเรียน`);
+    return { type: true, class_id: result._id };
   }
-  return {type: false}
+}
+
+// สร้างชั้น ม.1 และ ม.4 ใหม่สำหรับปีการศึกษาใหม่
+const create_new_first_classes = async (new_year: string) => {
+  try {
+    // ดึงข้อมูลชั้นปีเก่าเพื่อหาจำนวนห้องที่ต้องสร้าง
+    const old_classes_m1 = await ClassModel.find({ room: 1 }).sort({ number: 1 });
+    const old_classes_m4 = await ClassModel.find({ room: 4 }).sort({ number: 1 });
+
+    // สร้างชั้น ม.1 ใหม่
+    for (const old_class of old_classes_m1) {
+      const new_class_m1 = new ClassModel({
+        room: 1,
+        number: old_class.number,
+        year_id: new_year,
+        students: [],
+        teacher_id: null // ยังไม่มีครูประจำชั้น
+      });
+      await new_class_m1.save();
+      // console.log(`สร้างชั้น ม.1/${old_class.number} ใหม่สำเร็จ`);
+    }
+
+    // สร้างชั้น ม.4 ใหม่
+    for (const old_class of old_classes_m4) {
+      const new_class_m4 = new ClassModel({
+        room: 4,
+        number: old_class.number,
+        year_id: new_year,
+        students: [],
+        teacher_id: null // ยังไม่มีครูประจำชั้น
+      });
+      await new_class_m4.save();
+      // console.log(`สร้างชั้น ม.4/${old_class.number} ใหม่สำเร็จ`);
+    }
+
+    return { type: true };
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการสร้างชั้นใหม่:", error);
+    return { type: false };
+  }
 }
 const ClassController = {
   create_class,

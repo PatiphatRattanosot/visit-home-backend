@@ -73,7 +73,7 @@ export default (app: Elysia) =>
                     return { message: "ไม่พบข้อมูลครูในระบบ", active_total, inactive_total };
                 }
                 all_teacher.forEach(teacher => {
-                    if (teacher.status === "ทำงานอยู่") active_total++;
+                    if (teacher.status === "ใช้งานอยู่") active_total++;
                     if (teacher.status === "ไม่ได้ใช้งานแล้ว") inactive_total++;
                 });
 
@@ -389,16 +389,13 @@ export default (app: Elysia) =>
                                 const relationStatus = yearlyData.relationship_info?.family_relation_status;
                                 if (relationStatus) {
                                     switch (relationStatus.toLowerCase()) {
-                                        case 'อยู่ด้วยกัน':
-                                        case 'together':
+                                        case '0':
                                             family_relation_status.together++;
                                             break;
-                                        case 'หย่าร้าง':
-                                        case 'divorced':
+                                        case '1':
                                             family_relation_status.divorced++;
                                             break;
-                                        case 'แยกกันอยู่':
-                                        case 'separated':
+                                        case '2':
                                             family_relation_status.separated++;
                                             break;
                                         default:
