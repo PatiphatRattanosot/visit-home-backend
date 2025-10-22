@@ -168,6 +168,65 @@ src/
 
 The server will start on `http://localhost:3000/api`
 
+### Pull Docker image
+
+If you want to run the provided production image instead of building locally, pull the image from GitHub Container Registry:
+
+```bash
+# Pull prebuilt production image
+docker pull ghcr.io/patiphatrattanosot/visit-home-backend:latest
+```
+
+#### Run the pulled image
+
+```bash
+docker network create visit-home-network
+# verify
+docker network ls 
+```
+
+```bash
+# Windows
+docker run --restart=always -d --pull always ^
+   -e JWT_SECRET="JWT_SECRET" ^
+   -e NODE_ENV="dev" ^
+   -e PORT="3000" ^
+   -e FRONTEND_URL="http://localhost:5173" ^
+   -e DB_URL="mongodb://localhost:27017/visit-home" ^
+   -e FIREBASE_API_KEY="FIREBASE_API_KEY" ^
+   -e FIREBASE_AUTH_DOMAIN="FIREBASE_AUTH_DOMAIN" ^
+   -e FIREBASE_PROJECT_ID="FIREBASE_PROJECT_ID" ^
+   -e FIREBASE_STORAGE_BUCKET="FIREBASE_STORAGE_BUCKET" ^
+   -e FIREBASE_MESSAGING_SENDER_ID="FIREBASE_MESSAGING_SENDER_ID" ^
+   -e FIREBASE_APP_ID="FIREBASE_APP_ID" ^
+   --name visit-home-backend ^
+   -p 3000:3000 ^
+   --network visit-home-network ^
+   ghcr.io/patiphatrattanosot/visit-home-backend:latest
+
+# MacOS / Linux (bash)
+docker run --restart=always -d --pull always \
+   -e JWT_SECRET="JWT_SECRET" \
+   -e NODE_ENV="dev" \
+   -e PORT="3000" \
+   -e FRONTEND_URL="http://localhost:5173" \
+   -e DB_URL="mongodb://localhost:27017/visit-home" \
+   -e FIREBASE_API_KEY="FIREBASE_API_KEY" \
+   -e FIREBASE_AUTH_DOMAIN="FIREBASE_AUTH_DOMAIN" \
+   -e FIREBASE_PROJECT_ID="FIREBASE_PROJECT_ID" \
+   -e FIREBASE_STORAGE_BUCKET="FIREBASE_STORAGE_BUCKET" \
+   -e FIREBASE_MESSAGING_SENDER_ID="FIREBASE_MESSAGING_SENDER_ID" \
+   -e FIREBASE_APP_ID="FIREBASE_APP_ID" \
+   --name visit-home-backend \
+   -p 3000:3000 \
+   --network visit-home-network \
+   ghcr.io/patiphatrattanosot/visit-home-backend:latest
+```
+
+The server will start on `http://localhost:3000/api`
+
+
+
 ## ⚙️ Configuration
 
 ### Environment Variables
@@ -183,7 +242,7 @@ JWT_SECRET=your-super-secure-jwt-secret
 
 # Server Configuration
 PORT=3000
-NODE_ENV=dev 
+NODE_ENV=dev || production
 
 # CORS Configuration
 FRONTEND_URL=http://localhost:5173
